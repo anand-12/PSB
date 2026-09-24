@@ -1,0 +1,50 @@
+{
+  "method": "sb",
+  "seed": 0,
+  "final": {
+    "task": 2,
+    "average_accuracy": 0.7208999991416931,
+    "forgetting": 0.0073999762535095215,
+    "acquisition": 0.7245999574661255,
+    "accuracies": [
+      0.8159,
+      0.6259
+    ],
+    "nlls": [
+      0.649975830078125,
+      1.265834765625
+    ],
+    "eces": [
+      0.12705349922180176,
+      0.19200685620307922
+    ],
+    "diagnostics": {
+      "old_probes": 16,
+      "current_probes": 16,
+      "predictive_rank": 7,
+      "source_current_accuracy": 0.125,
+      "target_current_accuracy": 0.125,
+      "target_old_kl": 0.10175377130508423,
+      "coupling": "sinkhorn_sb",
+      "sinkhorn_epsilon": 0.3999999463558197,
+      "sinkhorn_marginal_error": 2.086162567138672e-07,
+      "coupling_entropy": 1.0,
+      "birkhoff_components": 8,
+      "path": "stochastic_bridge",
+      "clock_first": 0.5,
+      "clock_penultimate": 0.5,
+      "endpoint_rms_error": 3.7946108477626694e-07,
+      "lift_endpoint_kl": 0.08205317705869675
+    }
+  },
+  "accuracy_matrix": [
+    [
+      0.8233000040054321,
+      NaN
+    ],
+    [
+      0.8159000277519226,
+      0.6258999705314636
+    ]
+  ]
+}

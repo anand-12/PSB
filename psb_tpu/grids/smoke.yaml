@@ -1,0 +1,22 @@
+# Two-minute end-to-end check of every code path. Not a result.
+name: smoke
+defaults:
+  tasks: 3
+  particles: 8
+  stages: 5
+  moves_per_stage: 10
+  first_task_steps: 200
+  fisher_examples: 1024
+  probe_batch_size: 256
+blocks:
+  - {name: psb, seeds: 2}
+  - {name: beta1, set: {schedule: constant}, seeds: 2}
+  - {name: thermo, set: {schedule: thermo}, seeds: 1}
+  - {name: ewc, set: {method: ewc, lam: 1.0}, seeds: 1}
+  - {name: si, set: {method: si, lam: 1.0}, seeds: 1}
+  - {name: finetune, set: {method: finetune}, seeds: 1}
+  - {name: laplace, set: {init: laplace, init_modes: 2}, seeds: 1}
+  - {name: rotated, set: {benchmark: rotated}, seeds: 1}
+  - {name: split, set: {benchmark: split, tasks: 5}, seeds: 1}
+  - {name: long, set: {tasks: 6, eval_every: 3, checkpoint_every: 2}, seeds: 1}
+compare_to: psb

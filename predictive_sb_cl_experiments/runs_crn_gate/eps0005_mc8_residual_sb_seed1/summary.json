@@ -1,0 +1,90 @@
+{
+  "method": "residual_sb",
+  "seed": 1,
+  "final": {
+    "task": 5,
+    "average_accuracy": 0.945400059223175,
+    "forgetting": 0.028375014662742615,
+    "acquisition": 0.9680999517440796,
+    "accuracies": [
+      0.9481,
+      0.9165,
+      0.9359,
+      0.9588,
+      0.9677
+    ],
+    "nlls": [
+      0.20286024780273437,
+      0.4008330139160156,
+      0.2850691650390625,
+      0.18572005004882813,
+      0.12561224670410157
+    ],
+    "eces": [
+      0.05697539076209068,
+      0.15618596971035004,
+      0.10556839406490326,
+      0.06980518996715546,
+      0.033271417021751404
+    ],
+    "diagnostics": {
+      "old_probes": 256,
+      "current_probes": 64,
+      "predictive_rank": 15,
+      "source_current_accuracy": 0.140625,
+      "target_current_accuracy": 0.296875,
+      "target_old_mean_kl": 0.00012477353448048234,
+      "coupling": "sinkhorn_sb",
+      "sinkhorn_epsilon": 0.08265414088964462,
+      "sinkhorn_marginal_error": 0.0,
+      "coupling_entropy": 0.5,
+      "birkhoff_components": 1,
+      "path": "rao_blackwellized_residual_bridge",
+      "bridge_mc_samples": 8,
+      "residual_mean_schedule": "direct",
+      "source_residual_rms": 1.3547344207763672,
+      "target_residual_rms": 1.327986240386963,
+      "clock_first": 0.5623413324356079,
+      "clock_penultimate": 0.9740037322044373,
+      "endpoint_rms_error": 0.3056373596191406,
+      "lift_endpoint_kl": 0.003811400383710861
+    }
+  },
+  "accuracy_matrix": [
+    [
+      0.9764999747276306,
+      NaN,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9707000255584717,
+      0.9657999873161316,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9627000093460083,
+      0.9577999711036682,
+      0.9645000100135803,
+      NaN,
+      NaN
+    ],
+    [
+      0.9567999839782715,
+      0.9427000284194946,
+      0.9563999772071838,
+      0.9660000205039978,
+      NaN
+    ],
+    [
+      0.9480999708175659,
+      0.9164999723434448,
+      0.9358999729156494,
+      0.9588000178337097,
+      0.9677000045776367
+    ]
+  ]
+}

@@ -1,0 +1,40 @@
+[smoke] 12 runs, 0 complete, 12 pending in 8 shape groups on 1 tpu device(s)
+  permuted T=3 K=8 psb M=5 n=10: 5 runs, 64/device, 1 chunk(s)
+  permuted T=3 K=8 ewc M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+  permuted T=3 K=8 si M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+  permuted T=3 K=8 finetune M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+  permuted T=3 K=8 psb M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+  rotated T=3 K=8 psb M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+  split T=5 K=8 psb M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+  permuted T=6 K=8 psb M=5 n=10: 1 runs, 64/device, 1 chunk(s)
+[smoke] workload ~0 base-run equivalents (1 = 10-task Permuted MNIST, K=128, 2,500 moves/boundary)
+[smoke g1/8 c1/1] task 1/3 runs=5 27.3s mean avg acc 0.9250
+[smoke g1/8 c1/1] task 2/3 runs=5 12.6s mean avg acc 0.8907
+[smoke g1/8 c1/1] task 3/3 runs=5 0.0s mean avg acc 0.8700
+[smoke g2/8 c1/1] task 1/3 runs=1 12.9s mean avg acc 0.9245
+[smoke g2/8 c1/1] task 2/3 runs=1 2.4s mean avg acc 0.8889
+[smoke g2/8 c1/1] task 3/3 runs=1 0.0s mean avg acc 0.8586
+[smoke g3/8 c1/1] task 1/3 runs=1 5.7s mean avg acc 0.9245
+[smoke g3/8 c1/1] task 2/3 runs=1 2.5s mean avg acc 0.8910
+[smoke g3/8 c1/1] task 3/3 runs=1 0.0s mean avg acc 0.8587
+[smoke g4/8 c1/1] task 1/3 runs=1 0.5s mean avg acc 0.9245
+[smoke g4/8 c1/1] task 2/3 runs=1 2.2s mean avg acc 0.8912
+[smoke g4/8 c1/1] task 3/3 runs=1 0.0s mean avg acc 0.8564
+[smoke g5/8 c1/1] task 1/3 runs=1 5.2s mean avg acc 0.9168
+[smoke g5/8 c1/1] task 2/3 runs=1 2.5s mean avg acc 0.8837
+[smoke g5/8 c1/1] task 3/3 runs=1 0.0s mean avg acc 0.8689
+[smoke g6/8 c1/1] task 1/3 runs=1 7.3s mean avg acc 0.9245
+[smoke g6/8 c1/1] task 2/3 runs=1 0.3s mean avg acc 0.7708
+[smoke g6/8 c1/1] task 3/3 runs=1 0.0s mean avg acc 0.5935
+[smoke g7/8 c1/1] task 1/5 runs=1 12.9s mean avg acc 0.9991
+[smoke g7/8 c1/1] task 2/5 runs=1 2.3s mean avg acc 0.8826
+[smoke g7/8 c1/1] task 3/5 runs=1 0.0s mean avg acc 0.7719
+[smoke g7/8 c1/1] task 4/5 runs=1 0.0s mean avg acc 0.8665
+[smoke g7/8 c1/1] task 5/5 runs=1 0.0s mean avg acc 0.6750
+[smoke g8/8 c1/1] task 1/6 runs=1 2.2s mean avg acc 0.9245
+[smoke g8/8 c1/1] task 2/6 runs=1 0.3s
+[smoke g8/8 c1/1] task 3/6 runs=1 0.0s mean avg acc 0.8578
+[smoke g8/8 c1/1] task 4/6 runs=1 0.0s
+[smoke g8/8 c1/1] task 5/6 runs=1 0.0s
+[smoke g8/8 c1/1] task 6/6 runs=1 0.0s mean avg acc 0.8245
+[smoke] done in 0.03 h

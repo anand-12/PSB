@@ -1,0 +1,89 @@
+{
+  "method": "residual_sb",
+  "seed": 0,
+  "final": {
+    "task": 5,
+    "average_accuracy": 0.9470800757408142,
+    "forgetting": 0.025825023651123047,
+    "acquisition": 0.9677400588989258,
+    "accuracies": [
+      0.9517,
+      0.9277,
+      0.9304,
+      0.9589,
+      0.9667
+    ],
+    "nlls": [
+      0.18855186462402343,
+      0.3692974365234375,
+      0.3026380310058594,
+      0.1850016418457031,
+      0.13102386779785155
+    ],
+    "eces": [
+      0.059491489082574844,
+      0.1528683751821518,
+      0.11111801862716675,
+      0.0684145987033844,
+      0.03607023507356644
+    ],
+    "diagnostics": {
+      "old_probes": 256,
+      "current_probes": 64,
+      "predictive_rank": 15,
+      "source_current_accuracy": 0.125,
+      "target_current_accuracy": 0.359375,
+      "target_old_mean_kl": 0.00012319852248765528,
+      "coupling": "sinkhorn_sb",
+      "sinkhorn_epsilon": 0.8340741395950317,
+      "sinkhorn_marginal_error": 0.0,
+      "coupling_entropy": 0.5000001192092896,
+      "birkhoff_components": 1,
+      "path": "stochastic_residual_bridge",
+      "residual_mean_schedule": "direct",
+      "source_residual_rms": 1.3240424394607544,
+      "target_residual_rms": 1.2947229146957397,
+      "clock_first": 0.5623413324356079,
+      "clock_penultimate": 0.9740037322044373,
+      "endpoint_rms_error": 3.3495125535409898e-06,
+      "lift_endpoint_kl": 0.004218143969774246
+    }
+  },
+  "accuracy_matrix": [
+    [
+      0.977400004863739,
+      NaN,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9722999930381775,
+      0.9646000266075134,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9693999886512756,
+      0.9573000073432922,
+      0.9639999866485596,
+      NaN,
+      NaN
+    ],
+    [
+      0.9620000123977661,
+      0.9451000094413757,
+      0.9559000134468079,
+      0.9660000205039978,
+      NaN
+    ],
+    [
+      0.95169997215271,
+      0.9276999831199646,
+      0.930400013923645,
+      0.958899974822998,
+      0.96670001745224
+    ]
+  ]
+}

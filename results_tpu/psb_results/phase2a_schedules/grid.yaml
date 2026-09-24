@@ -1,0 +1,13 @@
+# Phase 2a -- beta schedules at a fixed budget (25 stages x 100 moves, K=128).
+# power: beta = (m/M)^p; hold: ramp over the first (1-h) of the stages, then
+# beta = 1; thermo: equal thermodynamic length from the previous boundary's
+# loss variance; constant: beta = 1 (no path). Does any path beat constant?
+name: phase2a_schedules
+compare_to: constant
+blocks:
+  - {name: constant, set: {schedule: constant}, seeds: 10}
+  - {name: linear, seeds: 10}
+  - {name: power, set: {schedule: power}, vary: {schedule_param: [0.25, 0.5, 2.0, 3.0]}, seeds: 10}
+  - {name: cosine, set: {schedule: cosine}, seeds: 10}
+  - {name: hold, set: {schedule: hold}, vary: {schedule_param: [0.2, 0.5, 0.8]}, seeds: 10}
+  - {name: thermo, set: {schedule: thermo}, seeds: 10}

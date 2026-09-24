@@ -1,0 +1,24 @@
+# Phase 3 -- long streams (Permuted MNIST, 20/50/100 tasks). gamma matters:
+# with gamma = 0.8, task 1's Fisher weighs 0.8^19 ~ 0.01 after 20 tasks.
+# Long streams evaluate all tasks only every eval_every tasks (the newest task
+# is always evaluated) and checkpoint on the same cadence.
+name: phase3_streams
+blocks:
+  - name: psb
+    zip: {tasks: [20, 50, 100], eval_every: [1, 5, 10], checkpoint_every: [1, 5, 10]}
+    vary: {gamma: [0.8, 0.9, 0.95, 1.0]}
+    seeds: 3
+  - name: beta1
+    set: {schedule: constant}
+    zip: {tasks: [20, 50, 100], eval_every: [1, 5, 10], checkpoint_every: [1, 5, 10]}
+    vary: {gamma: [0.8, 0.9, 0.95, 1.0]}
+    seeds: 3
+  - name: ewc
+    set: {method: ewc, lam: {best_from: phase1a_tune, block: ewc_k128, where: {gamma: 0.8}}}
+    zip: {tasks: [20, 50, 100], eval_every: [1, 5, 10], checkpoint_every: [1, 5, 10]}
+    vary: {gamma: [0.8, 0.9, 0.95, 1.0]}
+    seeds: 3
+  - name: si
+    set: {method: si, lam: {best_from: phase1a_tune, block: si_k128}}
+    zip: {tasks: [20, 50, 100], eval_every: [1, 5, 10], checkpoint_every: [1, 5, 10]}
+    seeds: 3

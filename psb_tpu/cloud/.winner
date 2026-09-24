@@ -1,0 +1,5 @@
+kind=gce
+zone=europe-west4-a
+machine=ct6e-standard-1t
+model=SPOT
+vm=psb-tpu

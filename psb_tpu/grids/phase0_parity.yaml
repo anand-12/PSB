@@ -1,0 +1,18 @@
+# Phase 0 -- parity gate: the JAX port must reproduce the PyTorch numbers
+# before any sweep is trusted. Targets:
+#   psb_k128    Permuted MNIST T=10, K=128, batch 64: 0.9099 +/- 0.0013 (5 seeds)
+#   fig2_psb    Fig. 2 setup (K=32, batch 128), tempered path: 0.9011 (1 seed)
+#   fig2_prox   Fig. 2 "beta = 1" arm, which also had a cosine LR decay: 0.8890 (1 seed)
+# fig2_beta1 is the matched control (beta = 1, constant LR); it has no target.
+# Local JAX check (2x TITAN RTX): 0.9119, 0.9040, 0.8953; matched control 0.9148.
+name: phase0_parity
+compare_to: fig2_psb
+blocks:
+  - {name: psb_k128, seeds: 5}
+  - {name: fig2_psb, set: {particles: 32, batch_size: 128}, seeds: 3}
+  - {name: fig2_prox, set: {particles: 32, batch_size: 128, schedule: constant, lr_decay: 1.0}, seeds: 3}
+  - {name: fig2_beta1, set: {particles: 32, batch_size: 128, schedule: constant}, seeds: 3}
+gate:
+  - {block: psb_k128, metric: average_accuracy, target: 0.910, tolerance: 0.005}
+  - {block: fig2_psb, metric: average_accuracy, target: 0.901, tolerance: 0.010}
+  - {block: fig2_prox, metric: average_accuracy, target: 0.889, tolerance: 0.015}

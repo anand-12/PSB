@@ -1,0 +1,83 @@
+[phase1b_seeds/ewc_k128_g08] lam <- 0.01 (best in phase1a_tune/ewc_k128)
+[phase1b_seeds/ewc_k1_g1] lam <- 0.01 (best in phase1a_tune/ewc_k1)
+[phase1b_seeds/si_k1] lam <- 1.0 (best in phase1a_tune/si_k1)
+[phase1b_seeds/si_k128] lam <- 1.0 (best in phase1a_tune/si_k128)
+[phase1b_seeds] 160 runs, 0 complete, 160 pending in 6 shape groups on 1 tpu device(s)
+  permuted T=10 K=128 psb M=25 n=100: 60 runs, 31/device, 2 chunk(s)
+  permuted T=10 K=128 ewc M=25 n=100: 20 runs, 31/device, 1 chunk(s)
+  permuted T=10 K=1 ewc M=25 n=100: 20 runs, 64/device, 1 chunk(s)
+  permuted T=10 K=1 si M=25 n=100: 20 runs, 64/device, 1 chunk(s)
+  permuted T=10 K=128 si M=25 n=100: 20 runs, 26/device, 1 chunk(s)
+  permuted T=10 K=128 finetune M=25 n=100: 20 runs, 31/device, 1 chunk(s)
+[phase1b_seeds] workload ~120 base-run equivalents (1 = 10-task Permuted MNIST, K=128, 2,500 moves/boundary)
+[phase1b_seeds g1/6 c1/2] task 1/10 runs=31 171.5s mean avg acc 0.9782
+[phase1b_seeds g1/6 c1/2] task 2/10 runs=31 164.3s mean avg acc 0.9710
+[phase1b_seeds g1/6 c1/2] task 3/10 runs=31 109.0s mean avg acc 0.9643
+[phase1b_seeds g1/6 c1/2] task 4/10 runs=31 109.2s mean avg acc 0.9577
+[phase1b_seeds g1/6 c1/2] task 5/10 runs=31 109.4s mean avg acc 0.9525
+[phase1b_seeds g1/6 c1/2] task 6/10 runs=31 109.6s mean avg acc 0.9449
+[phase1b_seeds g1/6 c1/2] task 7/10 runs=31 109.8s mean avg acc 0.9367
+[phase1b_seeds g1/6 c1/2] task 8/10 runs=31 110.0s mean avg acc 0.9301
+[phase1b_seeds g1/6 c1/2] task 9/10 runs=31 110.2s mean avg acc 0.9221
+[phase1b_seeds g1/6 c1/2] task 10/10 runs=31 110.4s mean avg acc 0.9151
+[phase1b_seeds g1/6 c2/2] task 1/10 runs=29 167.1s mean avg acc 0.9781
+[phase1b_seeds g1/6 c2/2] task 2/10 runs=29 146.7s mean avg acc 0.9724
+[phase1b_seeds g1/6 c2/2] task 3/10 runs=29 95.6s mean avg acc 0.9661
+[phase1b_seeds g1/6 c2/2] task 4/10 runs=29 95.7s mean avg acc 0.9595
+[phase1b_seeds g1/6 c2/2] task 5/10 runs=29 95.9s mean avg acc 0.9544
+[phase1b_seeds g1/6 c2/2] task 6/10 runs=29 96.1s mean avg acc 0.9464
+[phase1b_seeds g1/6 c2/2] task 7/10 runs=29 96.2s mean avg acc 0.9376
+[phase1b_seeds g1/6 c2/2] task 8/10 runs=29 96.4s mean avg acc 0.9299
+[phase1b_seeds g1/6 c2/2] task 9/10 runs=29 96.6s mean avg acc 0.9215
+[phase1b_seeds g1/6 c2/2] task 10/10 runs=29 96.7s mean avg acc 0.9129
+[phase1b_seeds g2/6 c1/1] task 1/10 runs=20 114.5s mean avg acc 0.9781
+[phase1b_seeds g2/6 c1/1] task 2/10 runs=20 96.2s mean avg acc 0.9750
+[phase1b_seeds g2/6 c1/1] task 3/10 runs=20 63.4s mean avg acc 0.9715
+[phase1b_seeds g2/6 c1/1] task 4/10 runs=20 63.5s mean avg acc 0.9677
+[phase1b_seeds g2/6 c1/1] task 5/10 runs=20 63.6s mean avg acc 0.9653
+[phase1b_seeds g2/6 c1/1] task 6/10 runs=20 63.7s mean avg acc 0.9611
+[phase1b_seeds g2/6 c1/1] task 7/10 runs=20 63.8s mean avg acc 0.9563
+[phase1b_seeds g2/6 c1/1] task 8/10 runs=20 63.9s mean avg acc 0.9541
+[phase1b_seeds g2/6 c1/1] task 9/10 runs=20 64.0s mean avg acc 0.9495
+[phase1b_seeds g2/6 c1/1] task 10/10 runs=20 64.1s mean avg acc 0.9460
+[phase1b_seeds g3/6 c1/1] task 1/10 runs=20 36.4s mean avg acc 0.9738
+[phase1b_seeds g3/6 c1/1] task 2/10 runs=20 8.4s mean avg acc 0.9608
+[phase1b_seeds g3/6 c1/1] task 3/10 runs=20 0.3s mean avg acc 0.9525
+[phase1b_seeds g3/6 c1/1] task 4/10 runs=20 0.3s mean avg acc 0.9444
+[phase1b_seeds g3/6 c1/1] task 5/10 runs=20 0.3s mean avg acc 0.9384
+[phase1b_seeds g3/6 c1/1] task 6/10 runs=20 0.3s mean avg acc 0.9298
+[phase1b_seeds g3/6 c1/1] task 7/10 runs=20 0.3s mean avg acc 0.9221
+[phase1b_seeds g3/6 c1/1] task 8/10 runs=20 0.3s mean avg acc 0.9160
+[phase1b_seeds g3/6 c1/1] task 9/10 runs=20 0.3s mean avg acc 0.9100
+[phase1b_seeds g3/6 c1/1] task 10/10 runs=20 0.3s mean avg acc 0.9012
+[phase1b_seeds g4/6 c1/1] task 1/10 runs=20 13.4s mean avg acc 0.9738
+[phase1b_seeds g4/6 c1/1] task 2/10 runs=20 8.4s mean avg acc 0.9592
+[phase1b_seeds g4/6 c1/1] task 3/10 runs=20 0.4s mean avg acc 0.9476
+[phase1b_seeds g4/6 c1/1] task 4/10 runs=20 0.4s mean avg acc 0.9369
+[phase1b_seeds g4/6 c1/1] task 5/10 runs=20 0.4s mean avg acc 0.9283
+[phase1b_seeds g4/6 c1/1] task 6/10 runs=20 0.4s mean avg acc 0.9174
+[phase1b_seeds g4/6 c1/1] task 7/10 runs=20 0.4s mean avg acc 0.9061
+[phase1b_seeds g4/6 c1/1] task 8/10 runs=20 0.4s mean avg acc 0.8986
+[phase1b_seeds g4/6 c1/1] task 9/10 runs=20 0.4s mean avg acc 0.8904
+[phase1b_seeds g4/6 c1/1] task 10/10 runs=20 0.4s mean avg acc 0.8780
+[phase1b_seeds g5/6 c1/1] task 1/10 runs=20 104.4s mean avg acc 0.9781
+[phase1b_seeds g5/6 c1/1] task 2/10 runs=20 103.0s mean avg acc 0.9744
+[phase1b_seeds g5/6 c1/1] task 3/10 runs=20 69.3s mean avg acc 0.9688
+[phase1b_seeds g5/6 c1/1] task 4/10 runs=20 69.4s mean avg acc 0.9634
+[phase1b_seeds g5/6 c1/1] task 5/10 runs=20 69.5s mean avg acc 0.9582
+[phase1b_seeds g5/6 c1/1] task 6/10 runs=20 69.6s mean avg acc 0.9527
+[phase1b_seeds g5/6 c1/1] task 7/10 runs=20 69.7s mean avg acc 0.9462
+[phase1b_seeds g5/6 c1/1] task 8/10 runs=20 69.8s mean avg acc 0.9418
+[phase1b_seeds g5/6 c1/1] task 9/10 runs=20 69.9s mean avg acc 0.9365
+[phase1b_seeds g5/6 c1/1] task 10/10 runs=20 70.0s mean avg acc 0.9303
+[phase1b_seeds g6/6 c1/1] task 1/10 runs=20 65.5s mean avg acc 0.9781
+[phase1b_seeds g6/6 c1/1] task 2/10 runs=20 91.9s mean avg acc 0.9380
+[phase1b_seeds g6/6 c1/1] task 3/10 runs=20 59.9s mean avg acc 0.8654
+[phase1b_seeds g6/6 c1/1] task 4/10 runs=20 60.0s mean avg acc 0.8185
+[phase1b_seeds g6/6 c1/1] task 5/10 runs=20 60.1s mean avg acc 0.7758
+[phase1b_seeds g6/6 c1/1] task 6/10 runs=20 60.2s mean avg acc 0.7464
+[phase1b_seeds g6/6 c1/1] task 7/10 runs=20 60.3s mean avg acc 0.6777
+[phase1b_seeds g6/6 c1/1] task 8/10 runs=20 60.4s mean avg acc 0.6273
+[phase1b_seeds g6/6 c1/1] task 9/10 runs=20 60.5s mean avg acc 0.5838
+[phase1b_seeds g6/6 c1/1] task 10/10 runs=20 60.6s mean avg acc 0.5586
+[phase1b_seeds] done in 1.34 h

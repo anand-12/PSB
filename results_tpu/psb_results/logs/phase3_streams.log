@@ -1,0 +1,20 @@
+[phase3_streams/ewc] lam <- 0.01 (best in phase1a_tune/ewc_k128)
+[phase3_streams/si] lam <- 1.0 (best in phase1a_tune/si_k128)
+[phase3_streams] 117 runs, 0 complete, 117 pending in 9 shape groups on 1 tpu device(s)
+  permuted T=20 K=128 psb M=25 n=100: 24 runs, 31/device, 1 chunk(s)
+  permuted T=50 K=128 psb M=25 n=100: 24 runs, 31/device, 1 chunk(s)
+  permuted T=100 K=128 psb M=25 n=100: 24 runs, 31/device, 1 chunk(s)
+  permuted T=20 K=128 ewc M=25 n=100: 12 runs, 31/device, 1 chunk(s)
+  permuted T=50 K=128 ewc M=25 n=100: 12 runs, 31/device, 1 chunk(s)
+  permuted T=100 K=128 ewc M=25 n=100: 12 runs, 31/device, 1 chunk(s)
+  permuted T=20 K=128 si M=25 n=100: 3 runs, 26/device, 1 chunk(s)
+  permuted T=50 K=128 si M=25 n=100: 3 runs, 26/device, 1 chunk(s)
+  permuted T=100 K=128 si M=25 n=100: 3 runs, 26/device, 1 chunk(s)
+[phase3_streams] workload ~652 base-run equivalents (1 = 10-task Permuted MNIST, K=128, 2,500 moves/boundary)
+[phase3_streams g1/9 c1/1] task 1/20 runs=24 148.5s mean avg acc 0.9788
+[phase3_streams g1/9 c1/1] task 2/20 runs=24 128.1s mean avg acc 0.9717
+[phase3_streams g1/9 c1/1] task 3/20 runs=24 84.9s mean avg acc 0.9650
+[phase3_streams g1/9 c1/1] task 4/20 runs=24 85.0s mean avg acc 0.9590
+[phase3_streams g1/9 c1/1] task 5/20 runs=24 85.2s mean avg acc 0.9531
+[phase3_streams g1/9 c1/1] task 6/20 runs=24 85.3s mean avg acc 0.9454
+[phase3_streams g1/9 c1/1] task 7/20 runs=24 85.5s mean avg acc 0.9375

@@ -1,0 +1,540 @@
+% Template for ICASSP-2026 paper; to be used with:
+%          spconf.sty  - ICASSP/ICIP LaTeX style file, and
+%          IEEEbib.bst - IEEE bibliography style file.
+% --------------------------------------------------------------------------
+\documentclass{article}
+\usepackage{spconf,amsmath,graphicx,hyperref, amssymb}
+
+% Example definitions.
+% --------------------
+\def\x{{\mathbf x}}
+\def\L{{\cal L}}
+
+% Title.
+% ------
+\title{Posterior Schrödinger Bridges for Continual Learning}
+%
+% Single address.
+% ---------------
+\name{Anand Ravishankar and Petar M. Djuri\'c\thanks{Thanks to Google TPU Builders Program}}
+\address{Department of Electrical and Computer Engineering\\
+Stony Brook University, NY 11794}
+%
+% For example:
+% ------------
+%\address{School\\
+%	Department\\
+%	Address}
+%
+% Two addresses (uncomment and modify for two-address case).
+% ----------------------------------------------------------
+%\twoauthors
+%  {A. Author-one, B. Author-two\sthanks{Thanks to XYZ agency for funding.}}
+%	{School A-B\\
+%	Department A-B\\
+%	Address A-B}
+%  {C. Author-three, D. Author-four\sthanks{The fourth author performed the work
+%	while at ...}}
+%	{School C-D\\
+%	Department C-D\\
+%	Address C-D}
+%
+\begin{document}
+\ninept
+%
+\maketitle
+%
+\begin{abstract}
+Probabilistic continual learning aims to mitigate forgetting in parametric models by maintaining an approximate posterior over multiple tasks. Existing parametric posterior approximations can overlook parameter configurations optimal for all past tasks, with approximation errors accumulating over the entire tasks stream. In this work, we introduce Posterior Schr\"odinger Bridges (PSB), which represents the accumulated parameter posterior as a Gaussian mixture centered on an ensemble of networks. At each task boundary, PSB fits a new stochastic bridge between the old and updated particle populations. The learned drift guides the next task update and initializes the subsequent bridge fit. We evaluate PSB on four image classification streams without storing examples from previous tasks. On Permuted MNIST, PSB attains $94.3\%$ final average accuracy, exceeding our single-network online EWC and SI baselines under the same architecture and per-network training schedule. Controlled comparisons on Permuted MNIST show that PSB outperforms an otherwise identical particle update without bridge guidance.
+\end{abstract}
+%
+\begin{keywords}
+Probabilistic Continual Learning, Schr\"odinger Bridge, Posterior approximation
+\end{keywords}
+%
+\section{Introduction}
+\label{sec:intro}
+
+Continual learning (CL) trains models as data distributions change while
+seeking to retain performance on earlier distributions~\cite{vandeven2022types}.
+This setting arises frequently in forecasting under concept drift ~\cite{osti_10695974,pham2023fsnet}, vision systems acquiring new concepts~\cite{rebuffi2017icarl,aljundi2019taskfree,mai2022online}, and robots adapting to changing environments~\cite{lesort2020robotics}.
+Training on new data can degrade performance on earlier tasks, a failure known as catastrophic forgetting ~\cite{mccloskey1989catastrophic}.
+
+Bayesian updating offers a principled way to carry information from
+earlier tasks without storing their data. Under a fixed model, exact
+updates recover the posterior obtained from all tasks jointly. However, in over-parameterized models such as deep neural networks, this posterior is generally intractable. EWC and online EWC use
+Fisher-weighted quadratic penalties derived from local Gaussian
+approximations~\cite{kirkpatrick2017ewc,schwarz2018progress}.
+Structured Laplace methods capture weight correlations
+~\cite{ritter2018laplace}, while VCL optimizes an approximate posterior
+directly~\cite{nguyen2018vcl}. These approaches make sequential
+inference practical, but approximations centered on one solution may
+miss other optimal parameter configurations while propagating error
+across tasks~\cite{wilson2020bayesian,kessler2023sequential}.
+
+A population of networks can represent distinct learned solutions
+~\cite{lakshminarayanan2017ensembles}. Updating that population also
+requires a way to move between successive posterior approximations.
+Schr\"odinger bridges (SBs) define a stochastic process connecting two
+distributions while remaining close to a reference process
+~\cite{leonard2014survey}. Iterative methods make these bridges
+tractable~\cite{debortoli2021dsb,shi2023dsbm}. In CL, both endpoint
+posteriors are available only through approximations, motivating a
+particle representation and a learned transport between tasks.
+
+In this work, we introduce Posterior Schr\"odinger Bridges (PSB), which represents the posterior distribution as an ensemble of networks and treats each task boundary as the transport of this population from the old posterior to the new one. We formulate replay-free
+probabilistic CL as a sequence of approximate Schr\"odinger bridges between
+carried and updated parameter distributions under a Fisher-metric reference. We
+construct each updated population by minimizing tempered likelihood objectives
+with an adaptive step and an exact proximal step under the accumulated Fisher
+metric, which reduces to an online EWC update for a single particle. We fit
+bridge drifts on neuron weight tokens and reuse the fitted drift at the next
+boundary, with memory independent of the number of tasks. On four image
+classification streams, PSB improves over our matched online EWC and SI runs.
+
+
+
+\section{Background}
+
+\subsection{Sequential Bayesian Continual Learning}
+
+Consider a sequence of $T$ tasks, where task $t$ provides a dataset $\mathcal{D}^{(t)}$ whose observations are considered i.i.d. and a parameterized model $\theta\in\mathbb{R}^P$. We assume that the same parameter space is used throughout the task sequence and after learning task $t$, its data are not available when training future tasks. Let $q^{(0)}(\theta)=p(\theta)$ be the initial prior and let $q^{(t)}(\theta) = p(\theta\mid\mathcal{D}^{(1:t)})$ denote the exact posterior after task $t$. If the task datasets are conditionally independent given $\theta$, Bayesian updating gives
+\begin{equation}
+    q^{(t+1)}(\theta)
+    = \frac{p(\mathcal{D}^{(t+1)}\mid\theta)\,q^{(t)}(\theta)}
+           {\int p(\mathcal{D}^{(t+1)}\mid\theta')\,q^{(t)}(\theta')\,d\theta'}.
+    \label{eq:sequential_bayes}
+\end{equation}
+Thus, under the assumed model, $q^{(t)}$ contains the information from earlier tasks needed for the next Bayesian update.
+
+For most applications, storing past tasks' samples is infeasible due to privacy or storage concerns and evaluating $q^{(t)}$ exactly is intractable. A replay-free learner instead retains a tractable approximation $\hat q^{(t)}$ after discarding $\mathcal{D}^{(t)}$. The new task then induces a target proportional to $p(\mathcal{D}^{(t+1)}\mid\theta)\hat q^{(t)}(\theta)$. Since this distribution is also generally intractable, the learner must both approximate it and carry the resulting approximation forward. Moreover, the
+approximation becomes the prior for the following task, so errors in $\hat q^{(t)}$ can propagate through subsequent updates~\cite{kessler2023sequential}. Probabilistic CL must therefore both represent the accumulated posterior and update that representation as new tasks arrive.
+
+\subsection{Schr\"odinger Bridges}
+
+Let $s\in[0,1]$ denote continuous bridge time, and let $\theta_s\in\mathbb{R}^P$ denote the model parameter vector at time $s$. Given two marginal distributions $\pi_0$ and $\pi_1$ and a reference process $\mathbb{Q}$, the SB is the path measure $\mathbb{P}^\star$ that is closest to the reference process while having the prescribed marginals~\cite{leonard2014survey}:
+\begin{equation}
+\mathbb{P}^\star
+=
+\arg\min_{\mathbb{P}}
+\mathrm{KL}(\mathbb{P}\,\|\,\mathbb{Q})
+\quad
+\text{s.t.}
+\quad
+\mathbb{P}_0=\pi_0, 
+\mathbb{P}_1=\pi_1.
+\label{eq:sb}
+\end{equation}
+
+In this work, we consider reference processes of the form
+$
+    d\theta_s=b(\theta_s,s)\,ds+\sigma\,dW_s,
+$
+where $b$ is the reference drift, $\sigma$ is the diffusion coefficient, and
+$W_s$ is a $P$-dimensional Wiener process. We allow $\sigma$ to be a positive
+scalar or a fixed positive definite matrix, the latter giving a reference whose
+noise is shaped by a metric on parameter space.
+
+Conditioned on its endpoints, $\mathbb{P}^\star$ follows the bridges of the reference process, so the optimization concerns the coupling of the two endpoint marginals. Furthermore, $\mathbb{P}^\star$ is the unique path measure that is both Markov and in the reciprocal class of $\mathbb{Q}$ with the prescribed marginals~\cite{shi2023dsbm}. Iterative solvers alternate between these two families. A reciprocal step keeps the current endpoint coupling and restores the reference bridges between the endpoints, while a Markovian step replaces the process by a Markov process with the same time marginals, obtained by regressing the bridge velocities~\cite{debortoli2021dsb,shi2023dsbm,peluchetti2023idbm}. The prescribed endpoint marginals are maintained throughout the iterations.
+
+
+
+\section{Posterior Schr\"odinger Bridges}
+\label{sec:method}
+
+% PSB represents the posterior after each task by a Gaussian mixture centered on
+% an ensemble of networks. When task $t+1$ arrives, a tempered sequence of
+% objectives moves this population toward the updated target, guided by the
+% bridge learned at the previous boundary. PSB then fits a new bridge between $\hat q^{(t)}$ and the
+% updated population under a Fisher-metric Brownian reference, and the updated
+% population defines $\hat q^{(t+1)}$.
+
+\subsection{Posterior representation}
+\label{sec:representation}
+
+We approximate the posterior after task $t$ by a mixture of $K$ Gaussian
+components centered on an ensemble of networks, which we refer to as particles:
+\begin{equation}
+\hat q^{(t)}(\theta)
+=
+\frac{1}{K}
+\sum_{k=1}^{K}
+\mathcal{N}\left(
+\theta;\theta^{(t,k)},\big(A^{(t)}\big)^{-1}
+\right),
+\label{eq:mixture}
+\end{equation}
+where $\theta^{(t,k)}\in\mathbb{R}^P$ denotes the parameter vector of particle
+$k$ after task $t$, and $A^{(t)}$ is a shared diagonal precision matrix. Each
+particle therefore serves as the center of one Gaussian component.
+
+The components allow the approximation to cover distinct parameter solutions,
+and the shared diagonal precision $A^{(t)}$ constrains changes to weights that
+are important for earlier tasks. Figure~\ref{fig0} illustrates the sequence of
+approximate posteriors and particle transitions across tasks. For the first
+task, the particles are initialized independently from a He-uniform
+distribution~\cite{he2015delving}, trained on $\mathcal{D}^{(1)}$ with their own
+sequences of minibatches, and used as equally weighted component centers of
+$\hat q^{(1)}$, following the view of deep ensembles as approximate Bayesian
+model averaging~\cite{lakshminarayanan2017ensembles,wilson2020bayesian}. After
+every task, the precision accumulates the Fisher information of that task,
+\begin{equation}
+    A^{(t)}=\alpha I+\sum_{j=1}^{t}\gamma^{\,t-j}N^{(j)}F^{(j)},
+    \label{eq:precision}
+\end{equation}
+where $N^{(j)}=|\mathcal{D}^{(j)}|$ is the number of examples in task $j$ and
+\begin{equation}
+    F^{(j)}=\mathbb{E}_{(x,y)\sim\mathcal{D}^{(j)}}\,\mathbb{E}_{k}
+    \Big[\big(\nabla_\theta\log p(y\mid x,\theta^{(j,k)})\big)^{\odot2}\Big]
+\end{equation}
+is its diagonal empirical Fisher, with $(x,y)$ drawn uniformly from the
+examples of $\mathcal{D}^{(j)}$, $k$ drawn uniformly from the $K$ particles, and
+$(\cdot)^{\odot2}$ the elementwise square. $N^{(j)}F^{(j)}$ serves as a
+diagonal curvature approximation for the likelihood of task $j$. Here
+$\gamma\in(0,1]$ discounts older tasks, with $\gamma=1$ giving an undiscounted
+Laplace propagation, and $\alpha>0$ is the precision of a Gaussian prior that
+keeps $A^{(t)}$ invertible.
+
+\subsection{Tempered targets and the update objective}
+\label{sec:target}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\linewidth]{fig0.pdf}
+    \caption{Schematic of sequential posterior approximation in PSB.
+      Tempered distributions $\pi^{(t)}_{s}$ guide particles from the
+      carried approximation $\hat q^{(t)}$ toward the updated target
+      $\tilde q^{(t+1)}$.}
+    \label{fig0}
+\end{figure}
+
+The update target $\tilde q^{(t+1)}(\theta)$ is proportional to the product of the new-task likelihood and the carried posterior approximation.
+Applying the full likelihood of the new task in a single step would require
+the particles to travel the entire distance to the target at once, with no
+intermediate objective to follow. We therefore introduce the likelihood
+gradually through the tempered targets
+\begin{equation}
+    \pi^{(t)}_{s}(\theta)\propto p(\mathcal{D}^{(t+1)}\mid\theta)^{s}\,
+    \hat q^{(t)}(\theta), \qquad s\in[0,1],
+    \label{eq:tempered}
+\end{equation}
+which begin at $\pi^{(t)}_{0}=\hat q^{(t)}$ and end at
+$\pi^{(t)}_{1}=\tilde q^{(t+1)}$, so that each small increase of $s$ changes
+the objective only slightly. We use one variable for the likelihood exponent
+and for bridge time, so that tempering and transport advance together. Every
+particle follows its own component of the mixture, for which we define the
+component target
+\begin{equation}
+    \pi^{(t,k)}_{s}(\theta)\propto p(\mathcal{D}^{(t+1)}\mid\theta)^{s}\,
+    \mathcal{N}\!\left(\theta;\theta^{(t,k)},\big(A^{(t)}\big)^{-1}\right),
+    \label{eq:componenttarget}
+\end{equation}
+whose log-gradient separates into the contributions of the new task and of the
+carried center,
+\begin{equation}
+    \nabla_\theta\log\pi^{(t,k)}_{s}(\theta)
+    = s\,\nabla_\theta\log p(\mathcal{D}^{(t+1)}\mid\theta)
+      -A^{(t)}\big(\theta-\theta^{(t,k)}\big).
+\label{eq:tempgrad}
+\end{equation}
+The first term drives the particle toward the tempered likelihood and the
+second pulls it back toward its carried center $\theta^{(t,k)}$, with a
+strength set by the accumulated Fisher information. The population target
+$\pi^{(t)}_{s}$ is the mixture of the $K$ component targets weighted by their
+normalizing constants. PSB moves every particle under its own component target
+and keeps the components equally weighted, which is the approximation made at
+each boundary.
+
+Let $\|z\|_B^2=z^{\top}Bz$ for a positive semi-definite matrix $B$, and let $\bar{\mathcal L}^{(t+1)}(\theta)$ be the mean negative log-likelihood of the new task. At $s=1$, the log-target
+of (\ref{eq:componenttarget}) is
+$\log p(\mathcal{D}^{(t+1)}\mid\theta)-\tfrac12\|\theta-\theta^{(t,k)}\|_{A^{(t)}}^2$
+up to a constant. Using (\ref{eq:precision}) and dividing by
+$-N^{(t+1)}$, maximizing the log-target is equivalent to minimizing
+\begin{equation}
+    \bar{\mathcal L}^{(t+1)}(\theta)
+    +\tfrac{1}{2}\textstyle\sum_{j=1}^{t}\gamma^{\,t-j}\tfrac{N^{(j)}}{N^{(t+1)}}
+    \big\|\theta-\theta^{(t,k)}\big\|_{F^{(j)}}^{2},
+    \label{eq:ewc}
+\end{equation}
+where the small isotropic term
+$\tfrac{\alpha}{2N^{(t+1)}}\|\theta-\theta^{(t,k)}\|^2$ is omitted. Up to that
+term, this is an online EWC objective~\cite{kirkpatrick2017ewc,schwarz2018progress}
+with penalty strength fixed at $N^{(j)}/N^{(t+1)}$, so a single particle at
+$s=1$ performs an online EWC update, and PSB adds the population and the
+transport between tasks.
+
+\subsection{Tempered transport}
+\label{sec:transport}
+
+We discretize the target path measure using the fixed schedule $s_m=m/M$ for
+$m=0,\ldots,M$, where $M$ is the number of temperature increments. At the
+boundary from task $t$ to $t+1$, we use $\theta^{(t,k)}_s$ to denote the
+position of particle $k$ at transport time $s\in[0,1]$, with
+$\theta^{(t,k)}_0=\theta^{(t,k)}$ and $\theta^{(t+1,k)}=\theta^{(t,k)}_1$ as the
+endpoints. For fixed $t$ and $k$, we write $\theta_m=\theta^{(t,k)}_{s_m}$.
+
+At each increment $m$, every particle takes $n$ optimization steps on
+$s_m\bar{\mathcal L}^{(t+1)}(\theta)
++\tfrac{1}{2N^{(t+1)}}\|\theta-\theta^{(t,k)}\|^2_{A^{(t)}}$, the negative
+logarithm of (\ref{eq:componenttarget}) at $s=s_m$ divided by $N^{(t+1)}$. Each step first
+applies an Adam~\cite{kingma2017adammethodstochasticoptimization} update to the new-task term, scaled by the
+temperature,
+\begin{equation}
+    \tilde\theta=\theta-s_m\,\eta\,\mathrm{Adam}\big(\nabla_\theta\bar{\mathcal L}^{(t+1)}(\theta)\big),
+    \label{eq:datastep}
+\end{equation}
+where $\eta$ is the step size. Scaling the update rather than the gradient preserves the effect of tempering under Adam's normalization. The step then applies the carried term as an exact proximal update,
+\begin{equation}
+    \theta\leftarrow\big(\tilde\theta+\eta A^{(t)}\theta^{(t,k)}\big)
+                     \,/\,\big(1+\eta A^{(t)}\big),
+    \label{eq:prox}
+\end{equation}
+with products and divisions taken elementwise. Equation~(\ref{eq:prox}) is the
+exact minimizer of
+$\tfrac{1}{2\eta}\|\theta-\tilde\theta\|^2+
+\tfrac12\|\theta-\theta^{(t,k)}\|_{A^{(t)}}^2$, so the pull toward the carried
+center is applied implicitly and remains stable for any $A^{(t)}$, whereas an
+explicit gradient step would require $\eta\lesssim1/\max(A^{(t)})$.
+
+
+\subsection{Fisher-metric Schr\"odinger bridge}
+\label{sec:bridge}
+
+At each boundary, PSB solves (\ref{eq:sb}) with $\pi^{(t)}_0=\hat q^{(t)}$,
+$\pi^{(t)}_1=\tilde q^{(t+1)}$ and the Fisher-metric Brownian reference
+\begin{equation}
+    \mathbb{Q}^{(t)}: d\theta_s=\sigma\big(A^{(t)}\big)^{-1/2}dW_s,
+    \quad s\in[0,1],
+    \label{eq:fisherreference}
+\end{equation}
+and we denote its solution by $\mathbb{P}^{\star(t)}$. For a path measure with
+drift $u_s$ relative to this reference, the control cost is
+$(2\sigma^2)^{-1}\mathbb{E}\int_0^1\|u_s\|_{A^{(t)}}^2\,ds$. Movement along
+directions that earlier tasks constrain strongly is therefore more expensive, so
+the stability-plasticity trade-off enters as a transport cost.
+
+We solve each bridge by iterative Markovian fitting
+(IMF)~\cite{shi2023dsbm,peluchetti2023idbm} between the empirical measures of
+the $K$ carried and $K$ terminal particles. Given a coupling $\Pi^{(t)}$ of the
+endpoints, the reciprocal step samples
+\begin{equation}
+    \theta_s=(1-s)\,\theta_0+s\,\theta_1
+    +\sigma\sqrt{s(1-s)}\,\big(A^{(t)}\big)^{-1/2}\xi,
+    \quad \xi\sim\mathcal{N}(0,I),
+    \label{eq:conditionalbridge}
+\end{equation}
+from the conditional bridge of $\mathbb{Q}^{(t)}$, where
+$(\theta_0,\theta_1)\sim\Pi^{(t)}$ are generic endpoint draws and $\theta_s$ is
+a generic bridge sample, rather than the endpoints $\theta^{(t,k)}_0$ and
+$\theta^{(t,k)}_1$ and the trajectory $\theta^{(t,k)}_s$ of a single
+particle. The Markovian step fits the forward and
+backward drifts,
+\begin{align}
+    \min_\phi\ &\mathbb{E}\left\|v^{\mathrm{f}}_\phi(\theta_s,s)
+    -\frac{\theta_1-\theta_s}{1-s}\right\|_{A^{(t)}}^{2},
+    \label{eq:lossf}\\
+    \min_\psi\ &\mathbb{E}\left\|v^{\mathrm{b}}_\psi(\theta_s,s)
+    -\frac{\theta_0-\theta_s}{s}\right\|_{A^{(t)}}^{2},
+    \label{eq:lossb}
+\end{align}
+with $s\sim\mathcal{U}[0,1]$, and we write $\phi^{(t)},\psi^{(t)}$ for the
+parameters fitted at boundary $t$. The coupling is initialized with independent
+endpoint samples and then updated by simulating the fitted forward or backward
+process, alternating directions between rounds. Exact IMF projections converge
+to $\mathbb{P}^{\star(t)}$, whereas learned drifts only approximate them.
+
+Fitting a drift over all weights from $K$ particles is infeasible, so the drifts
+act on neuron tokens. The token of unit $i$ in layer $\ell$ is its incoming
+weights and bias (one filter and its bias in a convolutional layer), and
+$[z]^{(\ell)}_i$ denotes the token of a weight vector $z$. The forward drift is
+predicted token by token,
+\begin{equation}
+    \big[v^{\mathrm{f}}_\phi(\theta_s,s)\big]^{(\ell)}_i
+    =f^{(\ell)}_\phi\!\left([\theta_s]^{(\ell)}_i,\,s,\,[g_s]^{(\ell)}_i,\,
+    [a_s]^{(\ell)}_i\right),
+    \label{eq:tokendrift}
+\end{equation}
+where $g_s=\nabla_\theta\log p(\mathcal{D}^{(t+1)}\mid\theta_s)$ is the new-task
+gradient, $a_s=-A^{(t)}(\theta_s-\theta_0)$ is the pull toward the sampled starting
+point, which plays the role of the carried-center term of
+(\ref{eq:tempgrad}) for a generic bridge sample, and $f^{(\ell)}_\phi$ is a multilayer
+perceptron shared by the $d_\ell$ units of layer $\ell$, so each particle yields
+$d_\ell$ training examples. Because the inputs describe how the new task and the
+carried posterior act on each unit, the drift depends on this evidence rather
+than on a task identifier and can be reused at the next boundary. A
+zero-initialized output layer makes the untrained drift zero, so fitting starts
+from the reference (\ref{eq:fisherreference}). The backward drift has the same
+form.
+
+% (\ref{eq:fisherreference}). The backward drift has the same form.
+\begin{table*}[t]
+  \centering
+  \caption{Final average accuracy $\mathrm{ACC}^{(T)}$ (\%). Our results are mean
+$\pm$ s.d.\ over 20 paired seeds. $^\dagger$Published result
+$^\ddagger$Multi-head evaluation with task identifiers. $^a$Validation
+accuracy, mean $\pm$ s.d.\ over 10 runs. $^b$Test accuracy with pretrained
+features, mean $\pm$ s.e.\ over 10 seeds. $^c$Different backbone and training
+protocol, mean $\pm$ s.e.\ over 10 seeds.}
+  \label{tab:main_results}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccc@{}}
+  \hline
+  & \multicolumn{2}{c}{MNIST} & CIFAR-10 & CIFAR-100 \\
+  \cline{2-3}
+  Method & Permuted & Split & Split & Split \\
+  \hline
+  \multicolumn{5}{l}{Baselines (without coreset)} \\
+  EWC$^\dagger$~\cite{kirkpatrick2017ewc,nguyen2018vcl,vandeven2019three,vandeven2022types,mazur2021target}
+      & $84.0$ & $63.95\pm1.90$ & $19.24\pm0.11^{a}$ & $8.24\pm0.25^{b}$ \\
+  Online EWC~\cite{schwarz2018progress,vandeven2019three,mazur2021target}
+      & $90.1\pm0.7$ & $64.32\pm1.90^{\dagger}$ & $19.22\pm0.12^{\dagger a}$ & -- \\
+  SI~\cite{zenke2017si,vandeven2019three,vandeven2022types,mazur2021target}
+      & $87.8\pm0.5$ & $65.36\pm1.57^{\dagger}$
+      & $19.27\pm0.10^{\dagger a}$ & $8.10\pm0.24^{\dagger b}$ \\
+  VCL$^\dagger$~\cite{nguyen2018vcl}
+      & $\approx90$ & -- & -- & -- \\
+  Improved VCL$^\dagger$~\cite{swaroop2019improving}
+      & $93.0\pm1.0$ & -- & -- & -- \\
+  % S-FSVI, no coreset$^\dagger$~\cite{rudner2022sfsvi}
+  %     & $84.06\pm0.46$ & -- & -- & -- \\
+  \hline
+  \multicolumn{5}{l}{Baselines (with coreset)} \\
+  Improved VCL$^\dagger$~\cite{swaroop2019improving}
+      & $94.6\pm0.3$ & -- & -- & -- \\
+  FRCL$^\dagger$~\cite{titsias2020frcl,rudner2022sfsvi}
+      & $94.30\pm0.06^{\ddagger}$ & -- & -- & -- \\
+  FROMP$^\dagger$~\cite{pan2020fromp,rudner2022sfsvi,vandeven2022types,kessler2023sequential}
+      & $94.90\pm0.04$ & $84.86\pm1.02$
+      & $48.92\pm10.86^{c}$ & -- \\
+  S-FSVI$^\dagger$~\cite{rudner2022sfsvi,kessler2023sequential}
+      & $95.76\pm0.02$ & --
+      & $50.85\pm3.87^{c}$ & $20.04\pm2.37^{c}$ \\
+  \hline
+  \multicolumn{5}{l}{PSB (Our method)} \\
+  % $K=2$   & $82.7\pm1.7$ & $57.4\pm2.1$
+  %         & $20.7\pm1.3$ & $8.3\pm0.8$ \\
+  % $K=8$   & $86.4\pm1.1$ & $60.3\pm1.3$
+  %         & $22.8\pm1.6$ & $9.8\pm0.9$ \\
+  $K=32$  & $88.7\pm0.9$ & $62.8\pm1.2$
+          & $25.6\pm1.1$ & $11.9\pm1.2$ \\
+  $K=64$  & $90.1\pm0.8$ & $64.1\pm1.0$
+          & $28.2\pm1.4$ & $13.6\pm1.0$ \\
+  $K=128$ & $93.8\pm0.2$ & $65.1\pm0.9$
+          & $31.4\pm1.0$ & $14.1\pm0.7$ \\
+  $K=256$ & $94.3\pm0.1$ & $65.1\pm0.4$
+          & $31.2\pm0.1$ & $14.8\pm0.2$ \\
+  \hline
+  \end{tabular*}
+\end{table*}
+\subsection{Bridge-guided transitions}
+\label{sec:transition}
+
+At the first boundary no drift is learned, so the transport uses the
+reference process alone. At every later boundary $t$, each particle is advanced
+at increment $m$ by an Euler-Maruyama step of the forward drift fitted at
+boundary $t-1$,
+\begin{equation}
+    \theta_m^{-}=\theta_{m-1}
+    +v^{\mathrm{f}}_{\phi^{(t-1)}}(\theta_{m-1},s_{m-1})\,\Delta s_m
+    +\sigma\sqrt{\Delta s_m}\,\big(A^{(t)}\big)^{-1/2}\xi_m,
+    \label{eq:euler}
+\end{equation}
+where $\Delta s_m=s_m-s_{m-1}$, $\xi_m\sim\mathcal{N}(0,I)$, and the drift
+inputs $g_s$ and $a_s$ are evaluated at the current boundary. We then take $n$ optimization steps from $\theta_m^{-}$ to $\theta_m$. The drift moves each particle to the neighborhood of the next tempered target, and the optimization steps then fit the new task while pulling the particle back
+toward its carried center.
+
+After the transport, the drifts are refitted by IMF between the populations
+$\{\theta^{(t,k)}\}_{k=1}^{K}$ and $\{\theta^{(t+1,k)}\}_{k=1}^{K}$, starting
+from $\phi^{(t-1)}$ and $\psi^{(t-1)}$. The terminal particles and the precision
+$A^{(t+1)}$ from (\ref{eq:precision}) define $\hat q^{(t+1)}$, after which
+$\mathcal{D}^{(t+1)}$ is discarded. After the final task, the prediction
+averages the predictive distributions of the particles,
+$p(y\mid x)\approx\frac{1}{K}\sum_{k=1}^{K}p(y\mid x,\theta^{(T,k)})$.
+
+\begin{figure}[t]
+    \centering
+    \begin{minipage}[t]{0.49\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{fig1.pdf}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.49\columnwidth}
+        \centering
+        \includegraphics[width=\linewidth]{fig3.pdf}
+    \end{minipage}
+    \caption{(a) Mean accuracy trajectories on Permuted MNIST at $K=256$ for
+    different numbers $M$ of temperature increments, at a fixed transport
+    budget $Mn$. (b) Average accuracy over the tasks seen so far on Permuted
+    MNIST, by method and particle count, where the ensemble baselines update
+    $K$ networks independently and average their predictive distributions.
+    Both are over 20 paired seeds.}
+    \label{fig2}
+\end{figure}
+\section{Experiments}
+\label{sec:experiments}
+
+\textbf{Setup.} We evaluate PSB on four image classification streams with a
+single shared head: Permuted and Split MNIST, Split CIFAR-10 and Split CIFAR-100. For both MNIST streams,
+we adopt the experimental setup and ReLU network with two
+hidden layers of $100$ units from~\cite{nguyen2018vcl}. Split CIFAR-10 consists of $5$
+two-class tasks, for which we follow the class-incremental protocol and
+convolutional classifier of~\cite{mazur2021target}. Split CIFAR-100 has $10$ ten-class tasks, for which we follow the setup of~\cite{vandeven2022types}, with a shared $100$-class
+head on top of a frozen convolutional feature extractor pretrained on CIFAR-10. We run online EWC~\cite{schwarz2018progress} and SI~\cite{zenke2017si} on
+Permuted MNIST with the same architecture, batch size, gradient budget and hyperparameter grid size as one PSB particle and report the final average accuracy
+$\mathrm{ACC}^{(T)}=\frac1T\sum_{j=1}^{T}a^{(T,j)}$, where $a^{(T,j)}$ is the
+accuracy on task $j$ after task $T$. All experiments were conducted on v6e TPUs,
+with the $K$ networks of PSB trained in parallel.
+
+\textbf{Implementation details.} For our primary results, we set $M=25$ with
+$n=100$ optimization steps each. On the
+MNIST streams, we use an Adam step size ($\eta$) of $10^{-3}$ with batch size $64$, and the first task trains each particle for $3{,}000$ steps. Each Fisher estimate uses $20{,}000$ examples in batches of $256$, with $\gamma=0.8$ and $\alpha=10^{-3}$. Every boundary runs 3 IMF rounds, with $\sigma$ tuned once on the first boundary and then held fixed. The drifts are per-layer MLPs of width $512$ with zero-initialized output layers, trained for $3{,}000$ AdamW
+steps on batches of $512$ tokens and warm-started from the previous boundary.
+For the baselines we tune the penalty strength of online EWC and of SI, and
+the decay $\gamma$ of online EWC, each on a logarithmic grid of six values over
+three seeds, while PSB keeps $\gamma=0.8$ fixed.
+Since the $K$ particles are updated as one batched operation, the transport at a
+boundary costs about as much wall-clock time on a TPU as training a single
+network, with bridge fitting as an additional overhead.
+
+\textbf{Comparison with other CL methods.} Table~\ref{tab:main_results}
+compares PSB with our runs of online EWC and SI and with published results. On
+Permuted MNIST, PSB at $K=256$ reaches $94.3\%$, compared with $90.1\%$ for
+online EWC and $87.8\%$ for SI, which use the same network and matched training
+and search budgets. Published VCL and improved VCL results with the same network are approximately $90\%$ and $93.0\%$. On domain-incremental Split MNIST, PSB reaches
+$65.1\%$, against $63.95\%$ for EWC, $64.32\%$ for online EWC and $65.36\%$ for
+SI, which use a larger $400$-$400$ network and therefore give context rather
+than a matched comparison. On Split CIFAR-10, PSB reaches $31.2\%$, compared
+with approximately $19.2\%$ for the published EWC, online EWC and SI baselines, and on Split CIFAR-100 it reaches $14.8\%$, compared with $8.24\%$ for EWC and $8.10\%$ for SI. Coreset methods, such as FROMP and S-FSVI, report higher accuracies across all streams but retain examples from earlier tasks.
+
+\textbf{Effect of varying $M$.} Fig.~\ref{fig2}(a) shows mean accuracy on
+Permuted MNIST at $K=256$ for different numbers $M$ of temperature increments
+at a fixed optimization budget $Mn$. We note that using intermediate tempered targets improves accuracy as compared to using the full likelihood at once. This could be attributed to the fact that at $M=1$ the new-task gradients allow the particles to move far along directions that earlier tasks constrain before the proximal term (\ref{eq:prox}) restores them. With tempering, consecutive targets $\pi^{(t)}_{s_{m-1}}$ and $\pi^{(t)}_{s_m}$ are close, so the particles at the end of one increment are already near the optimum of the next, and the new task is introduced gradually against the carried posterior. Accuracy saturates at $M=25$, and larger $M$ resulting in marginal improvements. A possible reason for this saturation could be that once adjacent marginals are close enough, a finer schedule reduces the discretization error of the
+path only marginally. Moreover, at a fixed budget a larger $M$ leaves fewer steps per increment, so
+each target is optimized less before the schedule moves on, which offsets the
+benefit of a finer path.
+
+\textbf{Effect of ensembling and bridge guidance.} Fig.~\ref{fig2}(b) shows the
+average accuracy over the Permuted MNIST task stream for PSB, PSB
+without bridge guidance, and EWC and VCL ensembles at $K=128$ and $K=256$. The
+ensemble baselines update $K$ networks independently and average their
+predictive distributions. To isolate the bridge, the variant without guidance is identical to PSB in
+every other respect, with the same particles, tempered targets, optimization
+budget and ensemble prediction, and only sets the learned drift
+$v^{\mathrm f}_{\phi^{(t-1)}}$ in (\ref{eq:euler}) to zero, leaving the
+Fisher-scaled Brownian reference (\ref{eq:fisherreference}) alone.
+After ten tasks, bridge guidance improves accuracy by $4.6$ points at $K=128$
+and $3.4$ points at $K=256$. The gap opens as the stream progresses rather than at the first boundary, where no drift has been learned. Increasing $K$ improves final accuracy for all four methods, but the EWC and VCL ensembles remain below PSB at the same $K$. These results suggest that the advantage of PSB comes from combining an ensemble with transport of the posterior along a SB.
+
+\section{Conclusion}
+
+In this work, we investigate Schr\"odinger bridges as a way to update an
+approximate weight posterior across tasks without retaining past examples.
+Our method carries a Gaussian-mixture posterior through a population of
+networks, moves that population along tempered likelihood targets, and
+fits a bridge between successive particle distributions. On Permuted MNIST,
+PSB improves over our matched online EWC and SI baselines. Controlled same-$K$ comparisons further show that the learned bridge improves upon the corresponding particle update without bridge guidance. 
+
+\bibliographystyle{IEEEbib}
+\bibliography{refs}
+\end{document}

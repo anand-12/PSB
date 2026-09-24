@@ -1,0 +1,11 @@
+[run_all] 1 chip(s), cap $150 at $1.35/chip-h; results in /mnt/data/psb_results
+[run_all] === smoke (Sun Sep 20 23:15:18 UTC 2026) spent so far ~$0.00 ===
+[run_all] === phase0_parity (Sun Sep 20 23:17:09 UTC 2026) spent so far ~$0.04 ===
+PASS psb_k128 average_accuracy = 0.9120 (target 0.91 ± 0.005, n=5)
+PASS fig2_psb average_accuracy = 0.9044 (target 0.901 ± 0.01, n=3)
+PASS fig2_prox average_accuracy = 0.8957 (target 0.889 ± 0.015, n=3)
+[run_all] === phase1a_tune (Sun Sep 20 23:22:43 UTC 2026) spent so far ~$0.17 ===
+[run_all] === phase1b_seeds (Mon Sep 21 00:04:20 UTC 2026) spent so far ~$1.10 ===
+[run_all] === phase2a_schedules (Mon Sep 21 01:24:42 UTC 2026) spent so far ~$2.91 ===
+[run_all] === phase2b_budget (Mon Sep 21 02:33:25 UTC 2026) spent so far ~$4.46 ===
+[run_all] === phase3_streams (Mon Sep 21 06:19:23 UTC 2026) spent so far ~$9.54 ===

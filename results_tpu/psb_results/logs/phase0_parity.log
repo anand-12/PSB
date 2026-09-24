@@ -1,0 +1,25 @@
+[phase0_parity] 14 runs, 0 complete, 14 pending in 2 shape groups on 1 tpu device(s)
+  permuted T=10 K=128 psb M=25 n=100: 5 runs, 31/device, 1 chunk(s)
+  permuted T=10 K=32 psb M=25 n=100: 9 runs, 64/device, 1 chunk(s)
+[phase0_parity] workload ~7 base-run equivalents (1 = 10-task Permuted MNIST, K=128, 2,500 moves/boundary)
+[phase0_parity g1/2 c1/1] task 1/10 runs=5 50.6s mean avg acc 0.9784
+[phase0_parity g1/2 c1/1] task 2/10 runs=5 27.7s mean avg acc 0.9701
+[phase0_parity g1/2 c1/1] task 3/10 runs=5 13.5s mean avg acc 0.9627
+[phase0_parity g1/2 c1/1] task 4/10 runs=5 13.6s mean avg acc 0.9554
+[phase0_parity g1/2 c1/1] task 5/10 runs=5 13.6s mean avg acc 0.9505
+[phase0_parity g1/2 c1/1] task 6/10 runs=5 13.6s mean avg acc 0.9429
+[phase0_parity g1/2 c1/1] task 7/10 runs=5 13.7s mean avg acc 0.9345
+[phase0_parity g1/2 c1/1] task 8/10 runs=5 13.7s mean avg acc 0.9278
+[phase0_parity g1/2 c1/1] task 9/10 runs=5 13.7s mean avg acc 0.9191
+[phase0_parity g1/2 c1/1] task 10/10 runs=5 13.7s mean avg acc 0.9120
+[phase0_parity g2/2 c1/1] task 1/10 runs=9 58.2s mean avg acc 0.9807
+[phase0_parity g2/2 c1/1] task 2/10 runs=9 19.9s mean avg acc 0.9745
+[phase0_parity g2/2 c1/1] task 3/10 runs=9 6.3s mean avg acc 0.9674
+[phase0_parity g2/2 c1/1] task 4/10 runs=9 6.3s mean avg acc 0.9610
+[phase0_parity g2/2 c1/1] task 5/10 runs=9 6.4s mean avg acc 0.9547
+[phase0_parity g2/2 c1/1] task 6/10 runs=9 6.4s mean avg acc 0.9461
+[phase0_parity g2/2 c1/1] task 7/10 runs=9 6.4s mean avg acc 0.9357
+[phase0_parity g2/2 c1/1] task 8/10 runs=9 6.4s mean avg acc 0.9278
+[phase0_parity g2/2 c1/1] task 9/10 runs=9 6.4s mean avg acc 0.9144
+[phase0_parity g2/2 c1/1] task 10/10 runs=9 6.4s mean avg acc 0.9045
+[phase0_parity] done in 0.09 h

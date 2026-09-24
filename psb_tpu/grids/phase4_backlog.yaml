@@ -1,0 +1,14 @@
+# Phase 4 -- backlog. (a) prior-strength sweeps on Rotated / Split-domain, which
+# had not peaked at lam = 16, for the path and the matched beta = 1 control;
+# (b) particle-count scaling (K = 1 is the single-network ablation);
+# (c) Laplace inits: particles sampled around 1 or 8 trained networks.
+name: phase4_backlog
+blocks:
+  - {name: rotated_psb, set: {benchmark: rotated}, vary: {lam: [16.0, 32.0, 64.0, 128.0]}, seeds: 5}
+  - {name: rotated_beta1, set: {benchmark: rotated, schedule: constant}, vary: {lam: [16.0, 32.0, 64.0, 128.0]}, seeds: 5}
+  - {name: split_psb, set: {benchmark: split, tasks: 5}, vary: {lam: [16.0, 32.0, 64.0, 128.0]}, seeds: 5}
+  - {name: split_beta1, set: {benchmark: split, tasks: 5, schedule: constant}, vary: {lam: [16.0, 32.0, 64.0, 128.0]}, seeds: 5}
+  - {name: psb_k, vary: {particles: [1, 8, 32, 128, 512, 1024]}, seeds: 5}
+  - {name: beta1_k, set: {schedule: constant}, vary: {particles: [1, 8, 32, 128, 512, 1024]}, seeds: 5}
+  - {name: laplace1, set: {init: laplace, init_modes: 1}, vary: {laplace_temperature: [0.5, 1.0, 2.0]}, seeds: 5}
+  - {name: laplace8, set: {init: laplace, init_modes: 8}, seeds: 5}

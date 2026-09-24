@@ -1,0 +1,24 @@
+# Phase 1b -- main comparison, 20 seeds, every method on the same seeds (same
+# initialisation and data order), reported as paired differences vs PSB.
+#   beta1      PSB without the tempered path (the matched control)
+#   prox_cos   beta = 1 with a cosine LR decay (the Fig. 2 arm)
+#   ewc_k128   ensemble control: same K and decayed prior, penalty through Adam
+name: phase1b_seeds
+compare_to: psb
+blocks:
+  - {name: psb, seeds: 20}
+  - {name: beta1, set: {schedule: constant}, seeds: 20}
+  - {name: prox_cos, set: {schedule: constant, lr_decay: 1.0}, seeds: 20}
+  - name: ewc_k128_g08
+    set: {method: ewc, gamma: 0.8, lam: {best_from: phase1a_tune, block: ewc_k128, where: {gamma: 0.8}}}
+    seeds: 20
+  - name: ewc_k1_g1
+    set: {method: ewc, particles: 1, gamma: 1.0, lam: {best_from: phase1a_tune, block: ewc_k1, where: {gamma: 1.0}}}
+    seeds: 20
+  - name: si_k1
+    set: {method: si, particles: 1, lam: {best_from: phase1a_tune, block: si_k1}}
+    seeds: 20
+  - name: si_k128
+    set: {method: si, lam: {best_from: phase1a_tune, block: si_k128}}
+    seeds: 20
+  - {name: finetune_k128, set: {method: finetune}, seeds: 20}

@@ -1,0 +1,278 @@
+========================================================
+   Cloud TPU - Cross-Platform General Diagnostic Utility
+========================================================
+
+🔍 [1/12] Checking gcloud authentication...
+  [PASS] Authenticated as: anandravishankar12@gmail.com
+
+🔍 [2/12] Retrieving project metadata...
+  ✅ Project ID:     sodium-hue-408214
+  ✅ Project Number: 85048215408
+
+🔍 [3/12] Checking billing status...
+  [PASS] Billing is ENABLED for this project (Billing Account ID: 01307C-159F6A-4B02B7).
+
+🔍 [4/12] Checking gcloud components...
+  ✅ Google Cloud SDK Version: 585.0.0
+  [PASS] gcloud 'alpha' components are installed (required for queued resources).
+
+🔍 [5/12] Checking network configuration (VPC)...
+  [PASS] 'default' VPC network exists.
+
+🔍 [6/12] Checking organizational policies...
+  [PASS] No restricting external IP policies detected.
+
+🔍 [7/12] Checking required APIs...
+  [PASS] tpu.googleapis.com is ENABLED
+  [PASS] compute.googleapis.com is ENABLED
+
+🔍 [8/12] Checking TPU and Compute service accounts...
+  [PASS] Default Compute Engine SA has storage permissions.
+  [WARN] TPU Service Agent role missing.
+         To create: gcloud beta services identity create --service tpu.googleapis.com
+
+🔍 [9/12] Checking Global Accelerator Quota (GPUS_ALL_REGIONS)...
+  [PASS] GPUS_ALL_REGIONS metric not found (default unlimited or unconstrained).
+
+🔍 [10/12] Scanning active or failed queued resources...
+  ✅ No existing queued resources detected.
+
+🔍 [10b/12] Scanning active Compute Engine first-class TPU VM instances...
+  ✅ No active Compute Engine TPU VM instances detected.
+
+🔍 [11/12] Querying TPU quotas...
+
+--- Quota Limits: europe-west4 ---
+  METRIC                                        LIMIT      USAGE     
+  -------------------------------------------------------------------
+  TPU_LITE_DEVICE_V5                            0.0        0.0       
+  PREEMPTIBLE_TPU_LITE_DEVICE_V5                0.0        0.0       
+  TPU_LITE_PODSLICE_V5                          512.0      0.0       
+  PREEMPTIBLE_TPU_LITE_PODSLICE_V5              1536.0     0.0       
+  queuedresources (Service Quota, Per-Zone)     20         -         
+  queuedresources (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v2s (Service Quota, Per-Zone)             160        -         
+  tpu-v2s (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v2s-pod (Service Quota, Per-Zone)         64         -         
+  tpu-v2s-pod (Service Quota, Per-Region)       Unlimited  -         
+  tpu-v2s-pod-preemptible (Service Quota, Per-Zone) 64         -         
+  tpu-v2s-pod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v2s-preemptible (Service Quota, Per-Zone) 480        -         
+  tpu-v2s-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v3s (Service Quota, Per-Zone)             80         -         
+  tpu-v3s (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v3s-pod (Service Quota, Per-Zone)         64         -         
+  tpu-v3s-pod (Service Quota, Per-Region)       Unlimited  -         
+  tpu-v3s-pod-preemptible (Service Quota, Per-Zone) 64         -         
+  tpu-v3s-pod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v3s-preemptible (Service Quota, Per-Zone) 240        -         
+  tpu-v3s-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5p (Service Quota, Per-Zone)             384        -         
+  tpu-v5p (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v5p-preemptible (Service Quota, Per-Zone) 1024       -         
+  tpu-v5p-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5p-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v5p-reserved (Service Quota, Per-Region)  Unlimited  -         
+  tpu-v5s-litepod (Service Quota, Per-Zone)     512        -         
+  tpu-v5s-litepod (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Zone) 8          -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Zone) 32         -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e (Service Quota, Per-Zone)             512        -         
+  tpu-v6e (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v6e-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v6e-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Region)  Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Region) 1024       -         
+  preemptible_tpu_v6e (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v6e (Service Quota, Per-Region) 1536       -         
+  tpu_v5p (Service Quota, Per-Zone)             Unlimited  -         
+  tpu_v5p (Service Quota, Per-Region)           384        -         
+  tpus_per_tpu_family (CT3) (Service Quota)     80         -         
+  tpus_per_tpu_family (CT3P) (Service Quota)    64         -         
+  tpus_per_tpu_family (CT6E) (Service Quota)    48         -         
+
+--- Quota Limits: southamerica-west1 ---
+  METRIC                                        LIMIT      USAGE     
+  -------------------------------------------------------------------
+  TPU_LITE_DEVICE_V5                            0.0        0.0       
+  PREEMPTIBLE_TPU_LITE_DEVICE_V5                0.0        0.0       
+  TPU_LITE_PODSLICE_V5                          512.0      0.0       
+  PREEMPTIBLE_TPU_LITE_PODSLICE_V5              1536.0     0.0       
+  queuedresources (Service Quota, Per-Zone)     20         -         
+  queuedresources (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod (Service Quota, Per-Zone)     512        -         
+  tpu-v5s-litepod (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Zone) 8          -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Zone) 32         -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e (Service Quota, Per-Zone)             512        -         
+  tpu-v6e (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v6e-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v6e-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Region)  Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Region) 1024       -         
+  preemptible_tpu_v6e (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v6e (Service Quota, Per-Region) 1536       -         
+  tpu_v5p (Service Quota, Per-Zone)             Unlimited  -         
+  tpu_v5p (Service Quota, Per-Region)           384        -         
+  tpus_per_tpu_family (CT3) (Service Quota)     80         -         
+  tpus_per_tpu_family (CT3P) (Service Quota)    64         -         
+  tpus_per_tpu_family (CT6E) (Service Quota)    48         -         
+
+--- Quota Limits: us-central1 ---
+  METRIC                                        LIMIT      USAGE     
+  -------------------------------------------------------------------
+  TPU_LITE_DEVICE_V5                            0.0        0.0       
+  PREEMPTIBLE_TPU_LITE_DEVICE_V5                0.0        0.0       
+  TPU_LITE_PODSLICE_V5                          512.0      0.0       
+  PREEMPTIBLE_TPU_LITE_PODSLICE_V5              1536.0     0.0       
+  queuedresources (Service Quota, Per-Zone)     20         -         
+  queuedresources (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v2s (Service Quota, Per-Zone)             160        -         
+  tpu-v2s (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v2s-pod (Service Quota, Per-Zone)         64         -         
+  tpu-v2s-pod (Service Quota, Per-Region)       Unlimited  -         
+  tpu-v2s-pod-preemptible (Service Quota, Per-Zone) 64         -         
+  tpu-v2s-pod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v2s-preemptible (Service Quota, Per-Zone) 480        -         
+  tpu-v2s-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v3s (Service Quota, Per-Zone)             80         -         
+  tpu-v3s (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v3s-preemptible (Service Quota, Per-Zone) 240        -         
+  tpu-v3s-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5p (Service Quota, Per-Zone)             384        -         
+  tpu-v5p (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v5p-preemptible (Service Quota, Per-Zone) 1024       -         
+  tpu-v5p-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5p-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v5p-reserved (Service Quota, Per-Region)  Unlimited  -         
+  tpu-v5s-litepod (Service Quota, Per-Zone)     512        -         
+  tpu-v5s-litepod (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Zone) 8          -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Zone) 32         -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e (Service Quota, Per-Zone)             512        -         
+  tpu-v6e (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v6e-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v6e-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Region)  Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Region) 1024       -         
+  preemptible_tpu_v6e (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v6e (Service Quota, Per-Region) 1536       -         
+  tpu_v5p (Service Quota, Per-Zone)             Unlimited  -         
+  tpu_v5p (Service Quota, Per-Region)           384        -         
+  tpus_per_tpu_family (CT3) (Service Quota)     80         -         
+  tpus_per_tpu_family (CT3P) (Service Quota)    64         -         
+  tpus_per_tpu_family (CT6E) (Service Quota)    0          -         
+
+--- Quota Limits: us-east5 ---
+  METRIC                                        LIMIT      USAGE     
+  -------------------------------------------------------------------
+  TPU_LITE_DEVICE_V5                            0.0        0.0       
+  PREEMPTIBLE_TPU_LITE_DEVICE_V5                0.0        0.0       
+  TPU_LITE_PODSLICE_V5                          512.0      0.0       
+  PREEMPTIBLE_TPU_LITE_PODSLICE_V5              1536.0     0.0       
+  queuedresources (Service Quota, Per-Zone)     20         -         
+  queuedresources (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5p (Service Quota, Per-Zone)             384        -         
+  tpu-v5p (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v5p-preemptible (Service Quota, Per-Zone) 1024       -         
+  tpu-v5p-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5p-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v5p-reserved (Service Quota, Per-Region)  Unlimited  -         
+  tpu-v5s-litepod (Service Quota, Per-Zone)     512        -         
+  tpu-v5s-litepod (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Zone) 8          -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Zone) 32         -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e (Service Quota, Per-Zone)             512        -         
+  tpu-v6e (Service Quota, Per-Region)           Unlimited  -         
+  tpu-v6e-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v6e-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Zone)    Unlimited  -         
+  tpu-v6e-reserved (Service Quota, Per-Region)  Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Region) 1024       -         
+  preemptible_tpu_v6e (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v6e (Service Quota, Per-Region) 1536       -         
+  tpu_v5p (Service Quota, Per-Zone)             Unlimited  -         
+  tpu_v5p (Service Quota, Per-Region)           384        -         
+  tpus_per_tpu_family (CT3) (Service Quota)     80         -         
+  tpus_per_tpu_family (CT3P) (Service Quota)    64         -         
+  tpus_per_tpu_family (CT6E) (Service Quota)    0          -         
+
+--- Quota Limits: us-west4 ---
+  METRIC                                        LIMIT      USAGE     
+  -------------------------------------------------------------------
+  TPU_LITE_DEVICE_V5                            0.0        0.0       
+  PREEMPTIBLE_TPU_LITE_DEVICE_V5                0.0        0.0       
+  TPU_LITE_PODSLICE_V5                          512.0      0.0       
+  PREEMPTIBLE_TPU_LITE_PODSLICE_V5              1536.0     0.0       
+  queuedresources (Service Quota, Per-Zone)     20         -         
+  queuedresources (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod (Service Quota, Per-Zone)     512        -         
+  tpu-v5s-litepod (Service Quota, Per-Region)   Unlimited  -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Zone) 1536       -         
+  tpu-v5s-litepod-preemptible (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Zone) 8          -         
+  tpu-v5s-litepod-serving (Service Quota, Per-Region) Unlimited  -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Zone) 32         -         
+  tpu-v5s-litepod-serving-preemptible (Service Quota, Per-Region) Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v5p (Service Quota, Per-Region) 1024       -         
+  preemptible_tpu_v6e (Service Quota, Per-Zone) Unlimited  -         
+  preemptible_tpu_v6e (Service Quota, Per-Region) 1536       -         
+  tpu_v5p (Service Quota, Per-Zone)             Unlimited  -         
+  tpu_v5p (Service Quota, Per-Region)           384        -         
+  tpus_per_tpu_family (CT3) (Service Quota)     80         -         
+  tpus_per_tpu_family (CT3P) (Service Quota)    64         -         
+  tpus_per_tpu_family (CT6E) (Service Quota)    0          -         
+
+💡 Tip: You have one or more TPU metrics with a limit of 0.0.
+   This is completely normal for machine types you haven't explicitly requested.
+   Just verify that the specific TPU type you want to use has a limit > 0 in your target region.
+
+🔍 [12/12] Checking TPU Location Visibility...
+  [PASS] All recommended zones are visible: us-central1-a, us-east5-a, us-east5-b, europe-west4-a, southamerica-west1-a, us-west4-a, europe-west4-b
+
+========================================================
+              DIAGNOSTIC SUMMARY DASHBOARD
+========================================================
+  Project ID:             sodium-hue-408214
+  Project Number:         85048215408
+  Billing Account ID:     01307C-159F6A-4B02B7
+  Google Cloud SDK Ver:   585.0.0
+--------------------------------------------------------
+  API - TPU:              [OK]
+  API - Compute:          [OK]
+  Billing Enabled:        [OK]
+  gcloud Alpha Support:   [OK]
+  Default Network (VPC):  [OK]
+  TPU Service Agent:      [WARN] (Action: Create identity)
+  Global Quota (Gate):    [OK]
+  Location Visibility:    [OK]
+  TPU Quotas (Standard):  [INFO] (Review active limits listed above)
+========================================================
+
+💾 A clean, color-stripped copy of this report has been saved to: tpu_diagnostic_report.txt
+   You can attach this file directly to your support email to help us fast-track your requests!
+

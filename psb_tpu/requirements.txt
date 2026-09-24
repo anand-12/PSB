@@ -1,0 +1,5 @@
+# JAX itself is installed by setup.sh (jax[tpu] on a TPU VM); these are the rest.
+numpy>=1.26
+scipy>=1.11
+pyyaml>=6.0
+pytest>=8.0

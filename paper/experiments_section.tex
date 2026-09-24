@@ -1,0 +1,112 @@
+\section{Experiments}
+\label{sec:experiments}
+
+\subsection{Experimental setup}
+
+We evaluate PSB on three image classification streams: \emph{[MNIST
+protocol]} based on MNIST~\cite{lecun1998gradient}, \emph{[CIFAR
+protocol]} based on CIFAR~\cite{krizhevsky2009learning}, and the
+\emph{[CORe50 scenario]} of CORe50~\cite{lomonaco2017core50}. These
+streams contain \textit{TBD}, \textit{TBD}, and \textit{TBD} tasks,
+respectively. We use the \emph{[class, domain, or task incremental]}
+evaluation protocol for each stream. Task identity is
+\emph{[available or unavailable]} at test time. No method retains
+examples from completed tasks.
+
+All methods use the same classifier architecture, data preprocessing,
+task order, and training budget within each benchmark. We compare PSB
+with fine-tuning, online EWC~\cite{schwarz2018progress}, synaptic
+intelligence~\cite{zenke2017si}, VCL~\cite{nguyen2018vcl}, and an
+ensemble baseline with the same number of networks as PSB. Each method
+is run with $20$ paired seeds. Paired runs share the task order and,
+where applicable, the initial network parameters. Hyperparameters are
+selected using \emph{[validation protocol]}, with the same tuning
+budget for every method. PSB uses $K=\mathrm{TBD}$ networks,
+\textit{TBD} temperature levels, and \textit{TBD} IMF rounds per
+boundary. The Langevin move budget, bridge noise $\sigma$, Fisher decay
+$\gamma$, and classifier architectures are \emph{[values]}.
+
+Let $a_{t,j}$ be test accuracy on task $j$ after learning task $t$.
+We report final average accuracy
+$A_T=T^{-1}\sum_{j=1}^{T}a_{T,j}$ and average forgetting
+$F_T=(T-1)^{-1}\sum_{j=1}^{T-1}
+(\max_{j\leq s<T}a_{s,j}-a_{T,j})$.
+Results are reported as the mean and standard deviation across paired
+seeds. We also report the paired difference between PSB and the
+strongest baseline for each benchmark.
+
+\subsection{Comparison with continual learning methods}
+
+Table~\ref{tab:main_results} reports final average accuracy. PSB
+achieves \textit{TBD}\% on the MNIST stream and \textit{TBD}\% on
+the CIFAR stream, exceeding the strongest evaluated baseline by
+\textit{TBD} and \textit{TBD} percentage points. On CORe50, PSB
+achieves \textit{TBD}\%, compared with \textit{TBD}\% for the
+strongest baseline. The paired differences are \textit{TBD},
+\textit{TBD}, and \textit{TBD}, respectively. Final forgetting is
+\textit{TBD}, \textit{TBD}, and \textit{TBD} for the three streams.
+These results assess retention after the full task sequence, while the
+mean accuracy immediately after learning each task is \textit{TBD},
+\textit{TBD}, and \textit{TBD}, respectively.
+
+\begin{table}[t]
+\centering
+\caption{Final average accuracy (\%) across $20$ paired seeds. Entries
+are mean $\pm$ standard deviation.}
+\label{tab:main_results}
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{lccc}
+\hline
+Method & MNIST & CIFAR & CORe50 \\
+\hline
+Fine-tuning & \textit{TBD} & \textit{TBD} & \textit{TBD} \\
+Online EWC & \textit{TBD} & \textit{TBD} & \textit{TBD} \\
+SI & \textit{TBD} & \textit{TBD} & \textit{TBD} \\
+VCL & \textit{TBD} & \textit{TBD} & \textit{TBD} \\
+Matched ensemble & \textit{TBD} & \textit{TBD} & \textit{TBD} \\
+PSB & \textit{TBD} & \textit{TBD} & \textit{TBD} \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Role of the bridge}
+
+We ablate the learned drift and the tempered path while holding the
+classifier, ensemble size, and per-boundary computation budget fixed.
+The reference-only variant sets the carried drift to zero. The
+fixed-target variant uses the same move budget with $\beta=1$.
+Table~\ref{tab:ablations} reports final accuracy and forgetting on
+\emph{[benchmark]}. Relative to reference-only transport, the learned
+drift changes accuracy by \textit{TBD} percentage points and
+forgetting by \textit{TBD}. Relative to the fixed-target variant,
+annealing changes accuracy by \textit{TBD} points.
+
+\begin{table}[t]
+\centering
+\caption{Ablations on \emph{[benchmark]}, using the same number of
+networks and matched computation per boundary. Values are mean
+$\pm$ standard deviation across $20$ paired seeds.}
+\label{tab:ablations}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc}
+\hline
+Variant & Avg. acc. (\%) & Forgetting \\
+\hline
+Reference only & \textit{TBD} & \textit{TBD} \\
+Fixed target, $\beta=1$ & \textit{TBD} & \textit{TBD} \\
+Full PSB & \textit{TBD} & \textit{TBD} \\
+\hline
+\end{tabular}
+\end{table}
+
+We assess whether the fitted bridge reaches its terminal population
+using the energy distance between simulated endpoints and the
+annealed terminal particles. After \textit{TBD} IMF rounds, this
+distance changes from \textit{TBD} to \textit{TBD}. The corresponding
+effective particle count during the next transition changes from
+\textit{TBD} to \textit{TBD}. These measurements test the transport
+itself alongside classification accuracy. PSB retains $K$ networks,
+one diagonal precision, and the forward and backward drift networks.
+Its persistent storage is independent of the number of completed
+tasks. The measured cost per boundary is \textit{TBD} compared with
+\textit{TBD} for the matched ensemble baseline.

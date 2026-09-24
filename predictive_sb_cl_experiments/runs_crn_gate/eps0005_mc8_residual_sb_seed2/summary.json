@@ -1,0 +1,90 @@
+{
+  "method": "residual_sb",
+  "seed": 2,
+  "final": {
+    "task": 5,
+    "average_accuracy": 0.9507400393486023,
+    "forgetting": 0.022675007581710815,
+    "acquisition": 0.9688799977302551,
+    "accuracies": [
+      0.9487,
+      0.936,
+      0.9413,
+      0.9613,
+      0.9664
+    ],
+    "nlls": [
+      0.20524153442382811,
+      0.35812850341796876,
+      0.2944313262939453,
+      0.17653175354003905,
+      0.12398139953613281
+    ],
+    "eces": [
+      0.06451310217380524,
+      0.16446475684642792,
+      0.12570300698280334,
+      0.06544335186481476,
+      0.03248516097664833
+    ],
+    "diagnostics": {
+      "old_probes": 256,
+      "current_probes": 64,
+      "predictive_rank": 15,
+      "source_current_accuracy": 0.1875,
+      "target_current_accuracy": 0.390625,
+      "target_old_mean_kl": 0.0001340620219707489,
+      "coupling": "sinkhorn_sb",
+      "sinkhorn_epsilon": 0.08444409817457199,
+      "sinkhorn_marginal_error": 0.0,
+      "coupling_entropy": 0.5,
+      "birkhoff_components": 1,
+      "path": "rao_blackwellized_residual_bridge",
+      "bridge_mc_samples": 8,
+      "residual_mean_schedule": "direct",
+      "source_residual_rms": 1.1972471475601196,
+      "target_residual_rms": 1.1732834577560425,
+      "clock_first": 0.5623413324356079,
+      "clock_penultimate": 0.9740037322044373,
+      "endpoint_rms_error": 0.1037394180893898,
+      "lift_endpoint_kl": 0.003365800529718399
+    }
+  },
+  "accuracy_matrix": [
+    [
+      0.9757000207901001,
+      NaN,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9740999937057495,
+      0.9670000076293945,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9653000235557556,
+      0.9602000117301941,
+      0.9681000113487244,
+      NaN,
+      NaN
+    ],
+    [
+      0.9531000256538391,
+      0.9469000101089478,
+      0.958299994468689,
+      0.967199981212616,
+      NaN
+    ],
+    [
+      0.9487000107765198,
+      0.9359999895095825,
+      0.9412999749183655,
+      0.9613000154495239,
+      0.9664000272750854
+    ]
+  ]
+}

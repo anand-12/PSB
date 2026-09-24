@@ -1,0 +1,251 @@
+\section{Posterior Schr\"odinger Bridges}
+\label{sec:method}
+
+Posterior Schr\"odinger Bridges (PSB) models each task transition as a
+Schr\"odinger bridge from a carried posterior approximation to its update
+under the new-task likelihood. At boundary $t$, the drift fitted at the
+preceding boundary guides an annealed traversal to a terminal population.
+The terminal networks define the next carried approximation. PSB then fits
+a new bridge between the carried approximation and the terminal population.
+Its drift guides boundary $t+1$. Thus, every boundary has its own bridge,
+while the learned drifts carry information forward across tasks.
+
+\subsection{Posterior endpoints}
+\label{sec:representation}
+
+After task $t$, we retain $K$ network parameters $\theta_t^{(k)}$ as the
+centres of a Gaussian mixture,
+\begin{equation}
+    \hat q_t(\theta)=\sum_{k=1}^{K}w_t^{(k)}
+    \mathcal{N}\!\left(\theta\mid\theta_t^{(k)},A_t^{-1}\right),
+    \label{eq:mixture}
+\end{equation}
+where the nonnegative weights sum to one and $A_t$ is a shared diagonal
+precision. The mixture can retain several parameter solutions, while its
+precision limits variation in directions important to earlier tasks. For
+task $1$, we train $K$ networks independently from He-uniform
+initializations~\cite{he2015delving} and use their final parameters as the
+mixture centres with uniform weights. The trained networks define an
+approximation to $q_1$. Starting parameters at later boundaries are drawn
+from the full mixture in (\ref{eq:mixture}), including its Gaussian spread.
+
+We update the precision using diagonal empirical Fisher information,
+\begin{equation}
+    A_t=\alpha I+\sum_{j=1}^{t}\gamma^{t-j}N_jF_j,
+    \label{eq:precision}
+\end{equation}
+where $N_j=|\mathcal{D}_j|$, $\gamma\in(0,1]$ discounts older tasks, and
+$\alpha>0$ keeps the precision invertible. The estimate for task $j$ is
+\begin{equation}
+    F_j=\frac{1}{N_j}\sum_{(x,y)\in\mathcal{D}_j}\sum_{k=1}^{K}w_j^{(k)}
+    \left(\nabla_\theta\log p(y\mid x,\theta_j^{(k)})\right)^{\odot2}.
+    \label{eq:fisher}
+\end{equation}
+Thus, $N_jF_j$ approximates the diagonal curvature of the full task
+likelihood. When $\gamma=1$, the estimates accumulate without discounting.
+
+Given $\hat q_t$, the incoming task defines the updated target
+\begin{equation}
+    \tilde q_{t+1}(\theta)\propto
+    p(\mathcal{D}_{t+1}\mid\theta)\hat q_t(\theta).
+    \label{eq:target}
+\end{equation}
+This applies Bayes' rule to the approximation carried from previous tasks.
+Its likelihood is the product over the $N_{t+1}$ examples, so its log is
+the sum of their log-likelihoods. To approach the target gradually, define
+\begin{equation}
+    \pi_{t,\beta}(\theta)\propto
+    p(\mathcal{D}_{t+1}\mid\theta)^\beta\hat q_t(\theta),
+    \qquad \beta\in[0,1].
+    \label{eq:tempered}
+\end{equation}
+Here $\pi_{t,0}=\hat q_t$ and $\pi_{t,1}=\tilde q_{t+1}$. Writing
+$r_k(\theta)$ for the normalized contribution of component $k$ in
+(\ref{eq:mixture}), the score is
+\begin{equation}
+\begin{split}
+    \nabla_\theta\log\pi_{t,\beta}(\theta)
+    &=\beta\nabla_\theta\log p(\mathcal{D}_{t+1}\mid\theta)\\
+    &\quad-A_t\left(\theta-
+    \sum_{k=1}^{K}r_k(\theta)\theta_t^{(k)}\right).
+\end{split}
+    \label{eq:pathscore}
+\end{equation}
+The two terms measure support from the incoming task and from the carried
+mixture. For one component, maximizing (\ref{eq:target}) is equivalent to
+minimizing
+\begin{equation}
+\begin{split}
+    \bar\ell_{t+1}(\theta)
+    &+\frac{1}{2}\sum_{j=1}^{t}\gamma^{t-j}
+    \frac{N_j}{N_{t+1}}\|\theta-\theta_t\|_{F_j}^{2}\\
+    &+\frac{\alpha}{2N_{t+1}}\|\theta-\theta_t\|^2,
+\end{split}
+    \label{eq:ewc}
+\end{equation}
+where $\bar\ell_{t+1}=-N_{t+1}^{-1}\log
+p(\mathcal{D}_{t+1}\mid\theta)$ and $\|u\|_M^2=u^\top Mu$.
+The resulting MAP objective has the form of online
+EWC~\cite{kirkpatrick2017ewc,schwarz2018progress}, with an additional
+isotropic term. PSB instead carries multiple components and estimates the
+updated distribution.
+
+\subsection{Fisher-metric Schr\"odinger bridge}
+\label{sec:bridge}
+
+At boundary $t$, the ideal bridge connects $\hat q_t$ to
+$\tilde q_{t+1}$. We choose a Brownian reference with initial
+distribution $\mathbb{Q}_{t,0}=\hat q_t$ and dynamics
+\begin{equation}
+    \mathbb{Q}_t:\quad
+    d\Theta_s=\sigma A_t^{-1/2}\,dW_s,\qquad s\in[0,1],
+    \label{eq:fisherreference}
+\end{equation}
+where $\sigma>0$ sets the noise level. The bridge is
+\begin{equation}
+    \mathbb{P}_t^\star=
+    \mathop{\arg\min}_{\substack{\mathbb{P}:\ \mathbb{P}_0=\hat q_t\\
+    \mathbb{P}_1=\tilde q_{t+1}}}
+    \mathrm{KL}(\mathbb{P}\,\|\,\mathbb{Q}_t).
+    \label{eq:psb}
+\end{equation}
+If $\mathbb{P}$ adds drift $u_s$ to (\ref{eq:fisherreference}), its path
+cost is
+\begin{equation}
+    \mathrm{KL}(\mathbb{P}\,\|\,\mathbb{Q}_t)
+    =\frac{1}{2\sigma^2}\mathbb{E}_{\mathbb{P}}
+    \int_0^1\|u_s\|_{A_t}^{2}\,ds.
+    \label{eq:fishercost}
+\end{equation}
+The bridge therefore charges more for motion in directions with greater
+accumulated Fisher information. In practice, both endpoint distributions
+are represented by finite populations, so the fitted bridge approximates
+(\ref{eq:psb}). The bridge time $s$ describes its stochastic path. The
+temperature $\beta$ in (\ref{eq:tempered}) describes a separate sequence
+used to obtain the terminal population.
+
+\subsection{Learning the bridge drift}
+\label{sec:drift}
+
+Given starting and terminal populations, we fit the bridge by iterative
+Markovian fitting (IMF)~\cite{shi2023dsbm}. We initially pair samples from
+the two populations independently. For a paired start $\Theta_0$ and end
+$\Theta_1$, the conditional reference bridge at time $s$ is
+\begin{equation}
+    \Theta_s=(1-s)\Theta_0+s\Theta_1+
+    \sigma\sqrt{s(1-s)}A_t^{-1/2}\xi,
+    \quad \xi\sim\mathcal{N}(0,I).
+    \label{eq:conditionalbridge}
+\end{equation}
+Let $\Pi$ denote the current pairing. The forward and backward drift
+networks are fitted to the conditional bridge velocities,
+\begin{align}
+    \mathcal{L}_{\mathrm f}(\phi_t)
+    &=\mathbb{E}\left\|v^{\mathrm f}_{\phi_t}(\Theta_s,s)
+    -\frac{\Theta_1-\Theta_s}{1-s}\right\|_{A_t}^{2},
+    \label{eq:lossf}\\
+    \mathcal{L}_{\mathrm b}(\psi_t)
+    &=\mathbb{E}\left\|v^{\mathrm b}_{\psi_t}(\Theta_s,s)
+    -\frac{\Theta_0-\Theta_s}{s}\right\|_{A_t}^{2}.
+    \label{eq:lossb}
+\end{align}
+The expectation uses $(\Theta_0,\Theta_1)\sim\Pi$, bridge samples from
+(\ref{eq:conditionalbridge}), and $s$ sampled away from $0$ and $1$.
+We then obtain a new pairing by simulating the fitted process from one
+endpoint and repeat the regression, alternating forward and backward
+directions. Exact IMF projections preserve the endpoint marginals. Finite
+populations and learned drifts preserve them only approximately.
+
+The drifts act on neuron tokens so that one predictor can be shared across
+units. A fully connected token contains a unit's incoming weights and bias.
+A convolutional token contains one output filter and its bias. Let
+$z_{i,s}^{(\ell)}$ be token $i$ of layer $\ell$ at $\Theta_s$. Let
+$g_{i,s}^{(\ell)}$ and $a_{i,s}^{(\ell)}$ be the matching parts of the
+new-task likelihood score and the carried mixture score in
+(\ref{eq:pathscore}). The forward drift is assembled from
+\begin{equation}
+    \big[v^{\mathrm f}_{\phi_t}(\Theta_s,s)\big]_i^{(\ell)}
+    =f_{\phi_t}^{(\ell)}\!\left(
+    z_{i,s}^{(\ell)},s,g_{i,s}^{(\ell)},a_{i,s}^{(\ell)}\right).
+    \label{eq:tokendrift}
+\end{equation}
+One network $f_{\phi_t}^{(\ell)}$ is shared across the units of layer
+$\ell$. This supplies token-level training examples from each network
+while keeping the drift parameterization fixed as tasks arrive. The
+backward drift uses the same architecture. Conditioning on the two scores
+lets the retained networks respond to the likelihood and prior at a new
+boundary, where both scores are recomputed.
+
+\subsection{Successive task transitions}
+\label{sec:transition}
+
+At boundary $t$, we draw starting parameters from $\hat q_t$ and raise
+$\beta$ through $0=\beta_0<\cdots<\beta_M=1$. The forward drift fitted
+at boundary $t-1$, denoted $v^{\mathrm f}_{\phi_{t-1}}$, guides each move.
+At the first boundary, we set this drift to zero. With
+$s_m=\beta_m$ and $\Delta s_m=s_m-s_{m-1}$, a proposal is
+\begin{equation}
+\begin{split}
+    \Theta_m=\Theta_{m-1}
+    &+v^{\mathrm f}_{\phi_{t-1}}(\Theta_{m-1},s_{m-1})\Delta s_m\\
+    &+\sigma\sqrt{\Delta s_m}A_t^{-1/2}\xi_m.
+\end{split}
+    \label{eq:euler}
+\end{equation}
+This use of $s_m=\beta_m$ evaluates the preceding drift during the
+proposal. It does not identify the intermediate bridge distributions
+with the tempered targets. At boundary $t$, the inputs to
+$v^{\mathrm f}_{\phi_{t-1}}$ use the new-task likelihood score and the
+prior score of $\hat q_t$.
+
+Let $K_m$ be the Gaussian density of (\ref{eq:euler}) and let $L_m$ be a
+normalized backward transition density obtained from the preceding
+backward drift. At the first boundary, both densities use the Brownian
+reference. Writing
+$\varrho_{t,\beta}(\theta)=p(\mathcal{D}_{t+1}\mid\theta)^\beta
+\hat q_t(\theta)$, we update each particle's weight by
+\begin{equation}
+    \omega_m^{(k)}\propto\omega_{m-1}^{(k)}
+    \frac{\varrho_{t,\beta_m}(\Theta_m^{(k)})
+    L_m(\Theta_{m-1}^{(k)}\mid\Theta_m^{(k)})}
+    {\varrho_{t,\beta_{m-1}}(\Theta_{m-1}^{(k)})
+    K_m(\Theta_m^{(k)}\mid\Theta_{m-1}^{(k)})}.
+    \label{eq:bridgeweight}
+\end{equation}
+The correction accounts for the difference between the guided proposal
+and the tempered target~\cite{delmoral2006smc}. Before each move, we
+choose the largest temperature increment whose provisional likelihood
+weights have effective size at least $\rho K$, for a chosen
+$\rho\in(0,1)$. For weights $\omega^{(k)}$,
+this size is $(\sum_k\omega^{(k)})^2/\sum_k(\omega^{(k)})^2$.
+If the effective size of the corrected weights falls below $K/2$, we
+draw a new population according to their normalized values. We also apply
+preconditioned Langevin moves targeting
+$\pi_{t,\beta_m}$,
+\begin{equation}
+    \theta'=\theta+\eta A_t^{-1}
+    \nabla_\theta\log\pi_{t,\beta_m}(\theta)
+    +\sqrt{2\eta}A_t^{-1/2}\xi,
+    \quad\xi\sim\mathcal{N}(0,I),
+    \label{eq:mala}
+\end{equation}
+with acceptance probabilities computed from the full tempered target
+and the forward and reverse proposal densities. At $\beta=1$, a final
+draw according to the normalized weights gives an equally weighted
+terminal population approximating $\tilde q_{t+1}$.
+
+The terminal networks become the centres of $\hat q_{t+1}$, with
+\begin{equation}
+    A_{t+1}=\alpha I+\gamma(A_t-\alpha I)+N_{t+1}F_{t+1}.
+    \label{eq:precisionupdate}
+\end{equation}
+PSB then fits the bridge at boundary $t$ between samples from
+$\hat q_t$ and the terminal population, using the reference based on
+$A_t$. We initialize its drift networks from the preceding boundary's
+parameters and retain the fitted $v^{\mathrm f}_{\phi_t}$ and
+$v^{\mathrm b}_{\psi_t}$ to guide the next transition. After computing
+$F_{t+1}$, we discard $\mathcal{D}_{t+1}$. At test time, we use the
+weighted predictions of the component centres,
+$p(y\mid x)\approx\sum_k w_{t+1}^{(k)}
+p(y\mid x,\theta_{t+1}^{(k)})$. The retained state has fixed size in the
+number of tasks.

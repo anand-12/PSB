@@ -1,0 +1,225 @@
+% Sections 2 (Background) and 3 (Posterior Schrodinger Bridges), compact version.
+% Target length: about one page at \ninept. Include with \input{sections_compact}.
+
+\section{Background}
+\label{sec:background}
+
+Consider a sequence of $T$ disjoint tasks with datasets
+$\mathcal{D}_1,\ldots,\mathcal{D}_T$ of i.i.d.\ samples and a model with
+parameters $\theta\in\mathbb{R}^P$ shared across tasks, where the data of a task
+are no longer available once it has been learned. Let $q_0(\theta)=p(\theta)$ be
+the prior and $q_t(\theta)=p(\theta\mid\mathcal{D}_{1:t})$ the posterior after
+task $t$. If the datasets are conditionally independent given $\theta$,
+\begin{equation}
+    q_{t+1}(\theta)\propto p(\mathcal{D}_{t+1}\mid\theta)\,q_t(\theta),
+    \label{eq:sequential_bayes}
+\end{equation}
+so $q_t$ carries all the information from earlier tasks that the next update
+requires. Since $q_t$ is intractable for neural networks, a replay-free learner
+retains an approximation $\hat q_t$ instead. The update then defines a target
+proportional to $p(\mathcal{D}_{t+1}\mid\theta)\,\hat q_t(\theta)$, which does not
+directly provide samples, and errors in $\hat q_t$ propagate to all subsequent
+updates~\cite{kessler2023sequential}. A replay-free learner must therefore both
+represent the accumulated posterior and update this representation as new tasks
+arrive.
+
+\section{Posterior Schr\"odinger Bridges}
+\label{sec:method}
+
+PSB represents the posterior by an ensemble of networks, transports it to each
+updated posterior by annealed Langevin dynamics, and fits a Schr\"odinger bridge
+between consecutive ensembles that guides the next transport.
+
+\subsection{Posterior representation and target}
+\label{sec:representation}
+
+We approximate the posterior after task $t$ by
+\begin{equation}
+    \hat q_t(\theta)=\sum_{k=1}^{K}w_t^{(k)}\,
+    \mathcal{N}\!\left(\theta;\,\theta_t^{(k)},\,A_t^{-1}\right).
+    \label{eq:mixture}
+\end{equation}
+Each term, which we call a component, is a Gaussian centered on a network
+$\theta_t^{(k)}$, called a particle, with weight $w_t^{(k)}$. The components
+cover distinct parameter solutions, and the shared diagonal precision
+\begin{equation}
+    A_t=\alpha I+\textstyle\sum_{j=1}^{t}\gamma^{\,t-j}N_jF_j
+    \label{eq:precision}
+\end{equation}
+accumulates the Fisher information of each task, where $N_j=|\mathcal{D}_j|$ and
+\begin{equation}
+    F_j=\mathrm{diag}\Big(\mathbb{E}_{(x,y)\in\mathcal{D}_j}\mathbb{E}_{k}
+    \big[\big(\nabla_\theta\log p(y\mid x,\theta_j^{(k)})\big)^{\odot2}\big]\Big)
+    \label{eq:fisher}
+\end{equation}
+is the diagonal empirical Fisher of task $j$, with $\odot$ the elementwise
+product. Here $\gamma\in(0,1]$ discounts older tasks and $\alpha>0$ is the
+precision of a Gaussian prior. Since $N_jF_j$ is the Laplace precision of the
+likelihood of task $j$, $A_t$ constrains each weight according to its importance
+for earlier tasks. For the first task, the particles are He-uniform
+initialized~\cite{he2015delving}, trained independently, and equally weighted,
+treating the ensemble as approximate posterior
+samples~\cite{lakshminarayanan2017ensembles,wilson2020bayesian}.
+
+When task $t+1$ arrives, we introduce its likelihood through the tempered
+posteriors
+\begin{equation}
+    \pi_{t,\beta}(\theta)\propto p(\mathcal{D}_{t+1}\mid\theta)^{\beta}\,
+    \hat q_t(\theta),\qquad \beta\in[0,1].
+    \label{eq:tempered}
+\end{equation}
+At $\beta=1$, this is Bayes' rule (\ref{eq:sequential_bayes}) applied to
+$\hat q_t$, which defines the target $\tilde q_{t+1}=\pi_{t,1}$. Raising $\beta$
+gradually avoids concentrating the weights on a few particles and moving the
+particles over the full distance at once. The score of the tempered posteriors is
+\begin{equation}
+\begin{split}
+    \nabla_\theta\log\pi_{t,\beta}(\theta)
+    &= \beta\,\nabla_\theta\log p(\mathcal{D}_{t+1}\mid\theta)\\
+    &\quad -A_t\Big(\theta-\textstyle\sum_{k=1}^{K}r_k(\theta)\,\theta_t^{(k)}\Big),
+\end{split}
+\label{eq:pathscore}
+\end{equation}
+where $r_k(\theta)\propto w_t^{(k)}\mathcal{N}(\theta;\theta_t^{(k)},A_t^{-1})$
+is the probability that $\theta$ belongs to component $k$. The likelihood score
+drives the particles toward the new task, and the prior score pulls each particle
+toward the carried solutions it most likely belongs to, with a strength set by
+$A_t$.
+
+For a single component, the log-target is
+$\log p(\mathcal{D}_{t+1}\mid\theta)-\tfrac12\|\theta-\theta_t\|_{A_t}^2$ up to a
+constant, with $\|u\|_M^2=u^{\top}Mu$. Substituting (\ref{eq:precision}),
+negating and dividing by $N_{t+1}$, maximizing the log-target is equivalent to
+minimizing
+\begin{equation}
+    \bar\ell_{t+1}(\theta)
+    +\tfrac{1}{2}\textstyle\sum_{j=1}^{t}\gamma^{\,t-j}\tfrac{N_j}{N_{t+1}}
+    \|\theta-\theta_t\|_{F_j}^{2},
+    \label{eq:ewc}
+\end{equation}
+where $\bar\ell_{t+1}$ is the mean negative log-likelihood of the new task and
+the small isotropic term $\tfrac{\alpha}{2N_{t+1}}\|\theta-\theta_t\|^2$ is
+omitted. This is the online EWC
+objective~\cite{kirkpatrick2017ewc,schwarz2018progress} with penalty strength
+fixed at $N_j/N_{t+1}$, so the EWC solution is the most probable parameter under
+the target of PSB with a single particle.
+
+\subsection{Annealed Langevin transport}
+\label{sec:langevin}
+
+As $\beta$ increases from $\beta_{m-1}$ to $\beta_m$, the particle weights are
+multiplied by the change in the tempered likelihood,
+\begin{equation}
+    w^{(k)}\leftarrow w^{(k)}\,
+    p\big(\mathcal{D}_{t+1}\mid\theta^{(k)}\big)^{\beta_m-\beta_{m-1}},
+    \label{eq:reweight}
+\end{equation}
+with each increment as large as possible while the effective number of
+particles $1/\sum_k(\bar w^{(k)})^2$ of the normalized weights stays above a
+fixed fraction of $K$. When the weights become uneven, low-weight particles are
+replaced by copies of high-weight ones and the weights are reset. The particles
+then take preconditioned Langevin steps toward $\pi_{t,\beta_m}$,
+\begin{equation}
+    \theta'=\theta+\eta\,A_t^{-1}\nabla_\theta\log\pi_{t,\beta_m}(\theta)
+    +\sqrt{2\eta}\,A_t^{-1/2}\xi,
+    \label{eq:mala}
+\end{equation}
+with $\xi\sim\mathcal{N}(0,I)$ and an adapted step size $\eta$, each accepted
+with a probability computed from the full task likelihood. The drift of these
+dynamics is the score (\ref{eq:pathscore}), and the preconditioner makes the
+steps cautious in directions constrained by earlier tasks. At $\beta=1$, the
+particles form the terminal population $\{\Theta_1^{(k)}\}$.
+
+\subsection{Fisher-metric Schr\"odinger bridge}
+\label{sec:bridge}
+
+Given two marginals and a reference process, the Schr\"odinger bridge (SB) is
+the path measure closest to the reference in Kullback--Leibler (KL) divergence
+that connects the marginals~\cite{leonard2014survey}. At each boundary, PSB
+solves
+\begin{equation}
+    \mathbb{P}^\star_t=\mathop{\arg\min}_{\substack{\mathbb{P}:\ \mathbb{P}_0=\hat q_t\\
+    \mathbb{P}_1=\tilde q_{t+1}}}\ \mathrm{KL}(\mathbb{P}\,\|\,\mathbb{Q}_t)
+    \label{eq:psb}
+\end{equation}
+for the Fisher-metric Brownian reference
+\begin{equation}
+    \mathbb{Q}_t:\quad d\Theta_s=\sigma A_t^{-1/2}\,dW_s,\qquad s\in[0,1].
+    \label{eq:fisherreference}
+\end{equation}
+For a process with added drift $u_s$, the KL divergence to $\mathbb{Q}_t$ is
+$(2\sigma^2)^{-1}\mathbb{E}\!\int_0^1\|u_s\|_{A_t}^2ds$ plus a term fixed by the
+initial marginal, so moving weights that earlier tasks constrain strongly is
+costly. Solving (\ref{eq:psb}) at every boundary yields a chain of SBs
+$\hat q_1\to\cdots\to\hat q_T$.
+
+We solve (\ref{eq:psb}) by iterative Markovian fitting (IMF)~\cite{shi2023dsbm}.
+Given a coupling of samples $(\Theta_0,\Theta_1)$ from $\hat q_t$ and the
+terminal population, intermediate points are drawn from the conditional bridge
+of $\mathbb{Q}_t$,
+\begin{equation}
+    \Theta_s=(1-s)\,\Theta_0+s\,\Theta_1+\sigma\sqrt{s(1-s)}\,A_t^{-1/2}\xi,
+    \label{eq:conditionalbridge}
+\end{equation}
+and a forward drift is fitted by
+\begin{equation}
+    \min_\phi\ \mathbb{E}\left\|v^{\mathrm{f}}_\phi(\Theta_s,s)
+    -\frac{\Theta_1-\Theta_s}{1-s}\right\|_{A_t}^{2},
+    \label{eq:lossf}
+\end{equation}
+with $s$ uniform on $[0,1]$. A backward drift $v^{\mathrm{b}}_\psi$ is fitted
+analogously with target $(\Theta_0-\Theta_s)/s$. New couplings are generated by alternately
+simulating the fitted forward and backward processes, and since learned drifts
+only approximate the IMF projections, we report the energy distance between
+simulated and terminal populations.
+
+A drift over all weights at once would be too large to fit from $K$ particles,
+so the drifts act on neuron tokens. The token of unit $i$ in a fully connected
+layer $\ell$ is its incoming weights and bias,
+$[W^{(\ell)}_{i,:},\,b^{(\ell)}_i]$, and in a convolutional layer it is one
+filter with its bias. Any vector $u$ over the weights is split in the same way,
+with $[u]^{(\ell)}_i$ its token at unit $i$ of layer $\ell$. The forward drift is
+predicted token by token,
+\begin{equation}
+    \big[v^{\mathrm{f}}_\phi(\Theta_s,s)\big]^{(\ell)}_i
+    =f^{(\ell)}_\phi\!\left([\Theta_s]^{(\ell)}_i,\,s,\,[g_s]^{(\ell)}_i,\,
+    [a_s]^{(\ell)}_i\right),
+    \label{eq:tokendrift}
+\end{equation}
+where $g_s=\nabla_\theta\log p(\mathcal{D}_{t+1}\mid\Theta_s)$, $a_s$ is the
+prior term of (\ref{eq:pathscore}) at $\Theta_s$, and $f^{(\ell)}_\phi$ is a
+multilayer perceptron shared by the $n_\ell$ units of layer $\ell$ that receives
+$s$ through Fourier features. Sharing turns each particle into $n_\ell$ training
+examples. The score inputs tell the network how the new task and the carried
+posterior pull on each unit, so the drift depends on this evidence rather than
+on a task identifier and remains usable at the next boundary. A zero-initialized
+output layer makes the untrained drift zero, so fitting starts from the
+reference (\ref{eq:fisherreference}). The backward drift has the same form.
+
+\subsection{Bridge-guided transitions}
+\label{sec:transition}
+
+The drift fitted at one boundary guides the transport at the next. The particles
+are moved by the Euler--Maruyama discretization of the previous forward drift,
+with $s_m=\beta_m$ and $\Delta s_m=s_m-s_{m-1}$,
+\begin{equation}
+    \Theta_{m}=\Theta_{m-1}+v^{\mathrm{f}}_\phi(\Theta_{m-1},s_{m-1})\,\Delta s_m
+    +\sigma\sqrt{\Delta s_m}\,A_t^{-1/2}\xi,
+    \label{eq:euler}
+\end{equation}
+and their weights are updated by
+\begin{equation}
+    w^{(k)}\leftarrow w^{(k)}\,
+    \frac{\pi_{t,\beta_m}(\Theta_m)\,L_m(\Theta_{m-1}\mid\Theta_m)}
+         {\pi_{t,\beta_{m-1}}(\Theta_{m-1})\,K_m(\Theta_m\mid\Theta_{m-1})},
+    \label{eq:bridgeweight}
+\end{equation}
+where $K_m$ and $L_m$ are the Gaussian transition densities of (\ref{eq:euler})
+and of the corresponding backward step~\cite{delmoral2006smc}. The terminal
+population thus targets $\tilde q_{t+1}$ for any drift, while an accurate drift
+keeps the weights nearly uniform and reduces the Langevin steps (\ref{eq:mala})
+needed after each reset. The drift is zero at the first boundary and is refitted
+by IMF after every transport. The terminal particles and the updated precision
+(\ref{eq:precision}) form $\hat q_{t+1}$, predictions average the particles'
+predictive distributions, and the stored state, $K$ particles, one diagonal
+precision and the drift networks, does not grow with the number of tasks.

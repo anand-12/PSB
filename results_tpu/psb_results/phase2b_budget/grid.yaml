@@ -1,0 +1,11 @@
+# Phase 2b -- the corrected Fig. 2: accuracy vs moves per boundary (2.5k-40k)
+# with every arm matched. The old figure compared the path (constant LR)
+# against beta = 1 with a cosine LR decay; here both LR choices are crossed.
+name: phase2b_budget
+compare_to: constant_moves_per_stage100
+blocks:
+  - {name: linear, vary: {moves_per_stage: [100, 200, 400, 800, 1600]}, seeds: 3}
+  - {name: constant, set: {schedule: constant}, vary: {moves_per_stage: [100, 200, 400, 800, 1600]}, seeds: 3}
+  - {name: prox_cos, set: {schedule: constant, lr_decay: 1.0}, vary: {moves_per_stage: [100, 200, 400, 800, 1600]}, seeds: 3}
+  - {name: linear_cos, set: {lr_decay: 1.0}, vary: {moves_per_stage: [100, 200, 400, 800, 1600]}, seeds: 3}
+  - {name: thermo, set: {schedule: thermo}, vary: {moves_per_stage: [100, 200, 400, 800, 1600]}, seeds: 3}

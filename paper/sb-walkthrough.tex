@@ -1,0 +1,753 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1.05in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,amsfonts}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[colorlinks=true,linkcolor=NavyBlue,citecolor=NavyBlue,urlcolor=NavyBlue]{hyperref}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}[definition]{Proposition}
+\newtheorem{theorem}[definition]{Theorem}
+\theoremstyle{remark}
+\newtheorem{remark}[definition]{Remark}
+
+\newcommand{\Rb}{\mathbb{R}}
+\newcommand{\Eb}{\mathbb{E}}
+\newcommand{\Pb}{\mathcal{P}}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\Dt}{\mathcal{D}}
+\newcommand{\Lh}{\mathcal{L}}
+\newcommand{\Mcal}{\mathcal{M}}
+\newcommand{\Rcal}{\mathcal{R}}
+\newcommand{\proj}{\mathrm{proj}}
+
+\title{\bfseries From Sequential Posteriors to a Schr\"odinger Bridge\\
+\large A walkthrough of posterior-bridge continual learning}
+\author{Working notes}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The method is built around three ideas, and this note develops each one only at
+the point where it becomes necessary.
+
+\S\ref{sec:problem} establishes what continual learning actually requires: not
+each task's posterior but the \emph{sequential} posterior, carried forward in a
+fixed-size representation because the data is discarded.
+\S\ref{sec:chase} is the heart of the note --- it describes what physically
+happens when we move the particles, in terms of a \emph{target that moves and
+particles that chase it}, and shows where the equilibrium sits at every moment.
+\S\ref{sec:lag} shows that the chase falls behind, and that this lag is the
+entire reason a Schr\"odinger bridge is needed.
+\S\ref{sec:reference} explains why the reference process is annealed Langevin
+and not Brownian motion, which is the choice that determines what ``damage''
+means in weight space.
+\S\ref{sec:sb}--\S\ref{sec:imf} define the bridge and the algorithm that finds
+it; \S\ref{sec:implementation}--\S\ref{sec:numbers} give the implementation and
+the measurements.
+\end{abstract}
+
+\tableofcontents
+
+% ===========================================================================
+\section{What continual learning actually requires}
+\label{sec:problem}
+
+\subsection{Each task induces a posterior}
+
+Let $\theta \in \Rb^P$ collect every weight of one shared network; for us
+$P = 89{,}610$. Task $t$ arrives as a dataset $\Dt_t$ and induces
+\begin{equation}
+p(\theta \mid \Dt_t) \;\propto\; p(\Dt_t \mid \theta)\, p(\theta).
+\end{equation}
+
+This is a \emph{distribution}, not a point. A neural network task does not have
+one solution; permuting hidden units gives identical functions, and beyond that
+exact symmetry there is a wide region of weight space where accuracy is
+essentially unchanged. Training returns one arbitrary member of that family.
+
+\subsection{But we need a different object}
+
+We do not want $p(\theta \mid \Dt_t)$. We want the \emph{sequential posterior}
+\begin{equation}
+q_t(\theta) \;\triangleq\; p(\theta \mid \Dt_{1:t}),
+\end{equation}
+which is a genuinely different distribution. Using conditional independence and
+substituting $p(\Dt_i\mid\theta) \propto p(\theta\mid\Dt_i)/p(\theta)$,
+\begin{equation}
+p(\theta \mid \Dt_{1:t}) \;\propto\;
+\frac{\prod_{i=1}^{t} p(\theta \mid \Dt_i)}{p(\theta)^{\,t-1}} .
+\label{eq:poe}
+\end{equation}
+A \emph{product} --- the object every Bayesian continual-learning method is
+ultimately approximating \cite{vcl}. Mass survives only where \emph{every} task's posterior has
+mass, so $q_t$ concentrates on the \textbf{intersection} of the solution
+families. A network excellent at task 1 and hopeless at task 2 gets almost no
+weight, however good task 1 alone would rate it.
+
+\begin{remark}[We verified the intersection is non-empty]
+Two networks trained from a \emph{shared} initialisation, one on task 1 and one
+on task 2, each score $0.06$--$0.09$ on the other's task: they are specialists.
+But the midpoint of the straight line between them scores $0.901$ and $0.889$.
+The intersection is real and lies between the specialists.
+\end{remark}
+
+Splitting the last factor out of \eqref{eq:poe}, or applying Bayes directly,
+gives the recursion:
+\begin{equation}
+q_{t+1}(\theta) \;\propto\; \underbrace{p(\Dt_{t+1} \mid \theta)}_{\Lh_{t+1}(\theta)} \; q_t(\theta).
+\label{eq:seqbayes}
+\end{equation}
+
+\subsection{The real difficulty is representation}
+
+Equation~\eqref{eq:seqbayes} says $q_t$ is a \emph{sufficient summary}:
+everything the old data had to say about $\theta$ is in it, and the old datasets
+are not needed. The difficulty is that we cannot store $q_t$.
+
+It is a function on $\Rb^{89{,}610}$. Tabulating it is impossible. Writing it
+symbolically as $\Lh_t \cdots \Lh_1 p(\theta)$ is exact but requires every
+dataset to evaluate --- which is replay in different notation, and the data is
+gone. That leaves lossy summaries, and the choice of summary \emph{is} the
+method:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+method & representation of $q_t$ & what it discards \\
+\midrule
+EWC & point $\mu$ + diagonal $\Lambda$ & everything but a local quadratic \\
+VCL & mean-field Gaussian & all correlation; re-projected each task \\
+ours & $K$ particles + $(\mu, \Lambda)$ & whatever the $K$ do not cover \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}[Continual learning is recursive lossy compression]
+Because \eqref{eq:seqbayes} feeds $q_t$ into the next step, each boundary's
+compression error becomes the next boundary's starting error. Ten tasks is ten
+rounds of re-encoding an already-degraded encoding. Forgetting, seen from the
+inside, is accumulated compression error.
+\end{remark}
+
+\subsection{What we carry, and the asymmetry it creates}
+
+We carry $K = 128$ particles $\Theta_t = \{\theta_t^{(k)}\}$ --- genuine
+networks, trained then independently refined so they differ (spread $\approx
+0.023$) --- together with a diagonal precision $\Lambda_t$.
+
+When task $t+1$ arrives:
+\begin{itemize}
+\item Of $q_t$ we have \textbf{samples}: 128 arrays of 89,610 floats, each of
+which can be loaded and run.
+\item Of $q_{t+1}$ we have a \textbf{scoring procedure}: hand it any $\theta$
+and \eqref{eq:seqbayes} returns a number proportional to $q_{t+1}(\theta)$.
+\end{itemize}
+
+Scoring is not generating. We can recognise a good network but cannot produce
+one: $q_{t+1}$ concentrates in an unimaginably small region of
+$\Rb^{89{,}610}$, and random weight vectors score at chance forever. Since
+prediction requires actual networks to forward-pass, we must \emph{produce}
+$K$ arrays distributed like $q_{t+1}$.
+
+\begin{remark}[Why we cannot simply reweight]
+Importance sampling is the textbook move: weight particle $k$ by
+$\Lh_{t+1}(\theta^{(k)})$. It is exactly correct and it collapses. The
+likelihood over $N$ examples is $\exp(-N\,\mathrm{CE})$, so with $N = 60{,}000$
+a loss gap of $0.001$ nats between two particles produces a weight ratio of
+$10^{26}$. All our particles are at chance on the new task and differ randomly,
+so one takes all the mass. We measured the effective sample size falling to
+$1.4$ out of $32$. Reweighting cannot move mass into a region the samples do not
+occupy --- the particles must physically move.
+\end{remark}
+
+% ===========================================================================
+\section{The moving target, and the chase}
+\label{sec:chase}
+
+This section describes what actually happens to the weights. Everything later
+is machinery for doing this well.
+
+\subsection{A sequence of targets}
+
+We do not move from $q_t$ to $q_{t+1}$ in one jump. We define a sequence of
+intermediate distributions and step through them. For a dial
+$\beta \in [0,1]$,
+\begin{equation}
+\pi_\beta(\theta) \;\propto\; \Lh_{t+1}(\theta)^{\beta} \; q_t(\theta).
+\label{eq:path}
+\end{equation}
+
+Read this in words. $\pi_\beta$ is \emph{``networks the old posterior likes,
+reweighted by new-task performance, with the new task counted at strength
+$\beta$.''}
+
+\begin{itemize}
+\item $\beta = 0$: the new task is ignored entirely. $\pi_0 = q_t$.
+\item $\beta = 0.5$: a network is favoured if it is good on the old tasks and
+somewhat good on the new one. Being excellent at the new task earns only half
+the credit it eventually will.
+\item $\beta = 1$: full Bayes. $\pi_1 = q_{t+1}$.
+\end{itemize}
+
+So \eqref{eq:path} is a smooth sequence of distributions beginning at what we
+have and ending at what we want. Substituting \eqref{eq:seqbayes} shows it is
+the geometric interpolation, $\pi_\beta \propto q_t^{1-\beta} q_{t+1}^{\beta}$ ---
+the standard annealing path of sequential Monte Carlo and annealed flow
+transport \cite{aft}.
+
+\subsection{The picture: a target that moves, and particles that chase it}
+
+Here is the mental model for the whole method.
+
+\begin{center}
+\emph{At every $\beta$ there is a target distribution $\pi_\beta$. Our 128
+particles are trying to be samples of it. As $\beta$ advances the target moves,
+and the particles chase.}
+\end{center}
+
+At $\beta = 0$ there is nothing to do: the particles already are samples of
+$\pi_0 = q_t$. Advance $\beta$ slightly and the target shifts --- it now wants
+networks tilted a little toward the new task. The particles are now slightly
+wrong, and a short run of updates corrects them. Advance again, correct again.
+After 25 such stages the target has become $q_{t+1}$, and if the particles kept
+up, they are samples of it.
+
+\subsection{What a single update does}
+
+To chase $\pi_\beta$ we follow its gradient. Taking logs of \eqref{eq:path},
+\begin{equation}
+\log \pi_\beta(\theta) = \beta \log \Lh_{t+1}(\theta) + \log q_t(\theta) + \text{const},
+\end{equation}
+so
+\begin{equation}
+\nabla_\theta \log \pi_\beta(\theta)
+=
+\underbrace{-\,\beta\, \nabla_\theta L_{t+1}(\theta)}_{\text{new-task pull, scaled by }\beta}
+\;\;
+\underbrace{-\,\Lambda_t(\theta - \mu_t)}_{\text{pull back to the old solution}} .
+\label{eq:twoforces}
+\end{equation}
+
+Every update applies exactly these two forces. Nothing else happens.
+
+\begin{itemize}
+\item The first is an ordinary gradient step on the new task, multiplied by
+$\beta$. At stage 1 it is $4\%$ of a normal step; at stage 25 it is a full one.
+\item The second is a spring pulling each weight back toward where it was, with
+\textbf{a different stiffness for every weight}. Weight $j$ feels stiffness
+$\Lambda_{t,j}$.
+\end{itemize}
+
+\begin{remark}[Where $\Lambda$ and $\mu$ come from]
+The particles are the representation of $q_t$, but a finite set of points has no
+gradient. To evaluate $\nabla \log q_t$ at an arbitrary $\theta$ we place a
+Gaussian kernel around each particle,
+$q_t(\theta) \approx \frac{1}{K}\sum_k \mathcal{N}(\theta; \theta^{(k)},
+\Lambda^{-1})$, so $\mu$ is the particle's own previous position and $\Lambda$
+is the width. Crucially $\Lambda$ is \emph{not} fitted to the particle spread
+--- 128 points in $89{,}610$ dimensions span a degenerate subspace. It is the
+accumulated Fisher, measured from data, which is the Laplace approximation's
+curvature and says how sharply the log-posterior falls off in each direction.
+\end{remark}
+
+\subsection{Where the two forces balance}
+
+The clearest way to see what the chase is doing is to ask where it would stop.
+Setting the total force in \eqref{eq:twoforces} to zero:
+\begin{equation}
+\beta\,\nabla_\theta L_{t+1}(\theta) + \Lambda(\theta - \mu) = 0
+\qquad\Longrightarrow\qquad
+\boxed{\;\theta - \mu \;=\; -\,\beta\; \Lambda^{-1} \nabla_\theta L_{t+1}(\theta)\;}
+\label{eq:equilibrium}
+\end{equation}
+
+Equation~\eqref{eq:equilibrium} is the mechanism of the method in one line. It
+says how far from its old value each weight settles, and two features matter:
+
+\paragraph{The displacement grows linearly in $\beta$.}
+At $\beta$ small the particles sit close to where they started. As the dial
+turns, the balance point slides steadily away from the anchor. \emph{The
+equilibrium is the moving target, and it moves smoothly.}
+
+\paragraph{Each coordinate is scaled by $1/\Lambda_j$.}
+A weight with $\Lambda_j = 100$ barely moves even at $\beta = 1$: it was
+important to the earlier tasks and the spring holds it. A weight with
+$\Lambda_j \approx 0$ moves freely: nothing earlier depended on it, so the new
+task may have it.
+
+The spring term $-\Lambda(\theta-\mu)$ is the gradient of the EWC penalty
+\cite{ewc}. The difference is that EWC \emph{postulates} that penalty, whereas
+here it arrives as one of the two terms of $\nabla\log\pi_\beta$ --- accompanied
+by the $\beta$ schedule, which EWC has no analogue of.
+
+\textbf{This is how task 1 survives while task 2 is learned.} Not by moving a
+little in every direction, but by moving a lot in the directions nobody needed
+and hardly at all in the directions that mattered. A uniform spring could not do
+this --- it would force one global compromise between plasticity and stability,
+whereas \eqref{eq:equilibrium} resolves that trade-off separately for each of
+the $89{,}610$ weights, using measured curvature.
+
+\subsection{One stage, concretely}
+
+With $K = 128$, $M = 25$ stages, $S$ updates per stage:
+
+\begin{enumerate}
+\item Set $\beta_m = m/25$. The equilibrium \eqref{eq:equilibrium} slides
+slightly further from the anchor.
+\item Record the two forces once, on a shared batch of $1024$ examples: the
+new-task gradient $g_m$ and the spring force $a_m$. (These are what the learned
+drift will be conditioned on; \S\ref{sec:implementation}.)
+\item Run $S$ updates. Each draws 128 \emph{independent} minibatches of 64 ---
+one per particle, so they stay distinct rather than becoming 128 copies of one
+trajectory --- then applies the two forces of \eqref{eq:twoforces}.
+\item Record the displacement $\Delta z_m$ that those $S$ updates produced.
+\end{enumerate}
+
+Measured magnitudes: the new-task step has RMS $8.9\times10^{-5}$, the spring
+$1.7\times10^{-5}$. The spring is smaller on average but concentrated entirely
+in the coordinates that matter, which is why it costs so little accuracy on the
+new task while preserving the old.
+
+% ===========================================================================
+\section{The chase falls behind: why a bridge is needed}
+\label{sec:lag}
+
+\subsection{The ideal case}
+
+Suppose the $S$ updates per stage were enough for the particles to fully settle
+at $\pi_{\beta_m}$ before $\beta$ advanced. Then at every stage they would be
+exact samples of the current target, and at $\beta = 1$ they would be exact
+samples of $q_{t+1}$.
+
+\begin{center}
+\emph{If the dial turned infinitely slowly, we would be finished --- and there
+would be no Schr\"odinger bridge in this paper.}
+\end{center}
+
+\subsection{What actually happens}
+
+At finite speed the particles do not settle. The dial moves faster than they
+relax, so at each stage they are still short of the current target, and they
+enter the next stage already behind. The error accumulates. \textbf{At
+$\beta = 1$ they land near $q_{t+1}$, not on it.}
+
+This is not hypothetical. Increasing the compute per boundary makes the chase
+tighter, and accuracy improves monotonically with no sign of saturation:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+updates per boundary & $2{,}500$ & $5{,}000$ & $10{,}000$ & $20{,}000$ \\
+\midrule
+accuracy & $0.9011$ & $0.9063$ & $0.9078$ & $0.9119$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Still climbing at $20{,}000$. \emph{That gap between where we are and the
+infinitely-slow ideal is the lag.}
+
+\subsection{And the schedule is what makes the chase work at all}
+
+It is worth confirming that the tempering is doing something, rather than the
+compute alone. Running the same two forces at full strength from the start ---
+no dial, $\beta = 1$ throughout --- gives the opposite behaviour:
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+updates per boundary & $2{,}500$ & $5{,}000$ & $10{,}000$ & $20{,}000$ \\
+\midrule
+with the dial & $0.9011$ & $0.9063$ & $0.9078$ & $\mathbf{0.9119}$ \\
+without & $0.8890$ & $0.8834$ & $0.8783$ & $0.8789$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Without the dial, \textbf{more compute makes things worse} --- forgetting rises
+from $0.073$ to $0.088$. The extra updates simply drive the particles further
+into a solution for the new task alone. The two curves move in opposite
+directions under identical budgets, so the gain is attributable to the path
+rather than to the optimisation effort.
+
+\subsection{So: what is the bridge for}
+
+We want the accuracy of an infinitely slow chase at the cost of a fast one. The
+Schr\"odinger bridge is precisely the object that provides it:
+
+\begin{center}
+\emph{the minimal correction to the chase that makes it land exactly on
+$q_{t+1}$ despite running in finite time.}
+\end{center}
+
+Before we can say ``minimal'' we need to say minimal \emph{with respect to
+what}, which is the next section.
+
+% ===========================================================================
+\section{Choosing the reference process}
+\label{sec:reference}
+
+A cost on transports is always measured relative to a \emph{reference process}:
+a baseline notion of what motion is free. This choice is not a technicality. It
+determines what the method considers expensive, which is to say what it
+considers damage.
+
+\subsection{Option 1: Brownian motion, and why it is wrong here}
+
+The standard choice in the Schr\"odinger-bridge literature is
+$\mathrm{d}\theta_s = \sigma\,\mathrm{d}W_s$ --- pure diffusion, no preferred
+direction.
+
+Under a Brownian reference, ``cheap'' means \emph{short in Euclidean distance},
+and the reference's own bridges are Brownian bridges: straight lines plus noise.
+The resulting transport would move each particle along the straight segment to
+its destination, entirely blind to the loss landscape.
+
+Two things go wrong, and both are fatal in weight space.
+
+\paragraph{Euclidean distance does not measure damage.}
+A large move in a direction no earlier task constrained is harmless. A tiny move
+in a direction task 1 depended on is catastrophic. A Brownian reference prices
+these identically, by length. It would happily destroy a critical weight so long
+as it did so over a short distance.
+
+\paragraph{Straight lines leave the manifold.}
+The segment between two good networks passes through weight vectors that may
+classify nothing. Nothing in a Brownian reference discourages this, because it
+has no notion of which regions of weight space contain functioning networks.
+
+\subsection{Option 2: annealed Langevin, which is the chase itself}
+
+Instead we take as reference the process that is \emph{already doing what we
+want} --- the chase of \S\ref{sec:chase}:
+\begin{equation}
+\mathrm{d}\theta_s \;=\; \nabla_\theta \log \pi_{\beta(s)}(\theta_s)\,\mathrm{d}s
+\;+\; \sqrt{2}\,\mathrm{d}W_s,
+\label{eq:reference}
+\end{equation}
+with the drift given by \eqref{eq:twoforces}: the two forces, nothing added.
+
+At frozen $\beta$ this SDE has $\pi_\beta$ as its stationary distribution, so it
+is exactly the dynamics whose equilibrium is \eqref{eq:equilibrium}. Advancing
+$\beta$ makes it \emph{annealed} Langevin.
+
+Three consequences, each of which fixes one of Brownian motion's problems.
+
+\paragraph{``Free'' now means following the two forces.}
+Motion the new-task gradient and the spring were already producing costs
+nothing. Only \emph{additional} force is charged for. And additional force is by
+definition movement the evidence does not justify --- which is the right thing
+to penalise.
+
+\paragraph{The metric becomes Fisher-weighted, automatically.}
+Because the reference contains $-\Lambda(\theta-\mu)$, moving against that pull
+requires extra force proportional to $\Lambda_j$. High-curvature directions are
+expensive; flat ones are nearly free. \textbf{The reference encodes what counts
+as damage, and this is where the per-weight geometry enters the cost.} We never
+had to impose it separately.
+
+\paragraph{The reference stays where networks work.}
+Its trajectories are gradient descent trajectories on a tempered objective, so
+they remain in regions of weight space where the loss is low --- not straight
+lines through the void.
+
+\subsection{And it very nearly solves the problem already}
+
+The decisive property, restated from \S\ref{sec:lag}: run \eqref{eq:reference}
+infinitely slowly and its marginal is $\pi_\beta$ at every $\beta$, so it lands
+exactly on $q_{t+1}$. Run it at finite speed and it lags.
+
+\begin{center}
+\emph{$Q$ is a natural process that almost solves our problem, and fails only
+because we run it in finite time.}
+\end{center}
+
+That is why it is the right reference. We are not importing a cost function by
+analogy; we are asking how little we can perturb a process that was nearly
+correct. And ``nearly correct'' means the correction is small, which
+--- as \S\ref{sec:implementation} shows --- is what makes it learnable at all.
+
+% ===========================================================================
+\section{The Schr\"odinger bridge}
+\label{sec:sb}
+
+\subsection{Statement}
+
+A \emph{path measure} $P$ is a distribution over whole trajectories
+$(\theta_s)_{s\in[0,1]}$, not over points; $P_s$ is its marginal at time $s$ and
+$P_{01}$ the joint law of its endpoints.
+
+\begin{definition}[Schr\"odinger bridge \cite{leonard}]
+\begin{equation}
+P^\star = \operatorname*{arg\,min}_{P} \KL(P \| Q)
+\qquad\text{subject to}\qquad P_0 = q_t, \quad P_1 = q_{t+1}.
+\label{eq:sb}
+\end{equation}
+\end{definition}
+
+\begin{remark}[The constraint is doing the work]
+Without the constraint the answer is trivial: be $Q$, at zero cost. But $Q$ is
+\emph{infeasible} --- it does not arrive. So $P^\star$ is the \emph{cheapest
+feasible} process: the minimal correction to the chase that fixes where it
+lands.
+\end{remark}
+
+For diffusions sharing a volatility, Girsanov makes the cost explicit:
+\begin{equation}
+\KL(P\|Q) \;=\; \tfrac{1}{2}\,\Eb_P \int_0^1 \big\lVert b^P_s(\theta_s) - b^Q_s(\theta_s) \big\rVert^2 \mathrm{d}s ,
+\end{equation}
+the integrated squared \emph{extra force} applied beyond the two natural ones.
+Not distance travelled --- control effort.
+
+\subsection{Why KL and not some other cost}
+
+By Sanov's theorem, if a large population evolves under $Q$ and we
+\emph{condition} on the atypical event that its terminal empirical distribution
+is $q_{t+1}$, the conditional law converges to exactly the constrained
+KL-minimiser. So \eqref{eq:sb} is not a modelling preference: it \emph{is} the
+posterior over trajectories given the two observations. $Q$ is the prior over
+motion, the marginals are the evidence.
+
+\subsection{Two properties of the solution}
+
+Neither is imposed; both follow, and together they make $P^\star$ computable.
+
+\paragraph{It uses $Q$'s own routes (``reciprocal'').}
+Split a path into endpoints and middle and apply the chain rule for KL:
+\begin{equation}
+\KL(P\|Q) = \KL\big(P(\text{ends})\|Q(\text{ends})\big)
++ \Eb\Big[\KL\big(P(\text{mid}\mid\text{ends}) \| Q(\text{mid}\mid\text{ends})\big)\Big].
+\label{eq:decomp}
+\end{equation}
+Both terms are non-negative and the second involves only the middle, so it can
+be set to \emph{exactly zero} by copying $Q$'s conditional middle --- which
+costs nothing, since the constraints are on the ends. Once a particle's start
+and destination are fixed, the cheapest route between them is however the
+reference would have gone. \textbf{All the optimisation is therefore in the
+coupling}: in deciding which particle becomes which solution.
+
+\paragraph{It is Markov.}
+If $Q$ is Markov --- and \eqref{eq:reference} is --- the constrained minimiser
+is too. This is fortunate rather than incidental: a Markov process can be
+simulated knowing only the current state, via a drift $v(\theta,s)$. Our entire
+implementation, a network reading the current weights and the current forces,
+is well posed only because of this.
+
+\begin{theorem}[\cite{dsbm}]
+\label{thm:char}
+$P^\star$ is the \emph{unique} path measure that is both Markov and in the
+reciprocal class $\Rcal(Q)$, with the prescribed marginals.
+\end{theorem}
+
+The two families genuinely differ. A member of $\Rcal(Q)$ picks an endpoint pair
+first and then travels, so observing where a path has been reveals which pair it
+is on and hence something about its future --- that is memory, and memory is not
+Markov. The bridge is the one coupling for which the two coincide.
+
+\subsection{The shape of the answer}
+
+By the Doob $h$-transform,
+\begin{equation}
+v^\star(\theta,s) = \underbrace{\nabla_\theta \log \pi_{\beta(s)}(\theta)}_{\text{the chase}}
++ \underbrace{\nabla_\theta \log h(\theta,s)}_{\text{correction}},
+\label{eq:htransform}
+\end{equation}
+where the correction says which way to lean \emph{now} so the arrival comes out
+right. Computing $h$ exactly requires solving a PDE in $89{,}610$ dimensions, so
+we learn the correction instead --- and \eqref{eq:htransform} dictates the
+architecture: a correction on top of the reference, zero-initialised, so that an
+untrained drift degrades to the plain chase rather than to noise.
+
+% ===========================================================================
+\section{Finding it: Iterative Markovian Fitting}
+\label{sec:imf}
+
+Theorem~\ref{thm:char} says $P^\star$ is the unique member of two families. We
+cannot construct it, but we can enforce each family in turn.
+
+\paragraph{Reciprocal projection --- keep the ends, restore $Q$'s middles.}
+\begin{equation}
+\proj_\Rcal(P) = P_{01} \otimes Q_{\mid 01}.
+\end{equation}
+That this is the KL projection is immediate from \eqref{eq:decomp}: for
+$\Pi = \pi \otimes Q_{\mid01}$ the second term is independent of $\pi$, so the
+minimiser is $\pi = P_{01}$. \emph{Result:} in $\Rcal(Q)$; \emph{but} the
+particles carry destinations again, so Markovianity breaks.
+
+\paragraph{Markovian projection --- erase the memory.}
+\begin{equation}
+v(\theta,s) = \Eb_P\!\left[\dot\theta_s \mid \theta_s = \theta\right],
+\label{eq:markovproj}
+\end{equation}
+the average step taken from each state, rebuilt as a memoryless process. By
+Girsanov the conditional expectation is the $L^2$-minimiser, so this is the KL
+projection. \emph{Result:} Markov; \emph{but} the induced coupling is no longer
+$Q$'s, so reciprocality breaks.
+
+\paragraph{Alternate.}
+Each projection repairs one property and damages the other, by less each round,
+converging to the intersection. Both preserve the marginals --- $\proj_\Rcal$
+leaves $P_{01}$ untouched and $\proj_\Mcal$ reproduces every time marginal ---
+so the constraints hold at every iterate.
+
+\begin{remark}[One pass is flow matching; iterating is the bridge]
+\eqref{eq:markovproj} is a regression. Applying it once, to whatever coupling
+you began with, gives flow matching \cite{flowmatch} --- and that is where most
+implementations stop. But that process's coupling is whatever your initial guess
+produced, with no reason to be the reciprocal one. The re-coupling step is the
+difference between a curve fit and a bridge.
+\end{remark}
+
+% ===========================================================================
+\section{Implementation}
+\label{sec:implementation}
+
+\subsection{The prior operator, solved exactly}
+
+Rather than a gradient step on $\log q_t$ we apply its exact proximal operator:
+\begin{align}
+\proj(\theta) &= \operatorname*{arg\,min}_x \frac{\lVert x-\theta\rVert^2}{2\alpha\eta}
++ \tfrac12 (x-\mu)^\top \Lambda (x-\mu)
+\\
+\Longrightarrow\quad x_j &= \frac{\theta_j + \alpha\eta\Lambda_j \mu_j}{1+\alpha\eta\Lambda_j} .
+\label{eq:prox}
+\end{align}
+A weighted average between where the weight is and where it was.
+
+\begin{remark}[Operator, not penalty]
+Adding $\tfrac{\lambda}{2}\lVert\theta-\mu\rVert^2_\Lambda$ to the loss routes
+the prior gradient through Adam, which divides each coordinate by its own
+gradient RMS --- cancelling exactly the curvature weighting the penalty exists
+to impose. Applied outside the preconditioner, the weighting survives.
+\end{remark}
+
+\subsection{Tokenisation}
+
+A whole network is one sample in $89{,}610$ dimensions and we hold $128$ of
+them: $0.0014$ samples per dimension, hopeless for any regression. Viewing a
+network instead as $210$ per-neuron weight vectors (layer $\ell$ contributes
+$n_\ell$ tokens of dimension $d_\ell+1$) gives $26{,}880$ tokens in total, but
+tokens from different layers live in different spaces and cannot be pooled, so
+the ratio must be read per layer: $100\times128 = 12{,}800$ samples in $785$
+dimensions ($16.3$ per dimension) for the first layer, $12{,}800$ in $101$
+($126.7$) for the second, and $10\times128 = 1{,}280$ in $101$ ($12.7$) for the
+head. The worst layer is still four orders of magnitude better off than the
+whole-network view, and the map is affine and invertible.
+
+\subsection{The learned drift}
+
+The Markovian projection \eqref{eq:markovproj} becomes
+\begin{equation}
+\min_\phi \Eb \left\lVert d_\phi(z_m, g_m, a_m, \beta_m) - \Delta z_m \right\rVert^2 ,
+\end{equation}
+with $\Delta z_m$ the displacement the reference updates produced over stage
+$m$. Conditioning on $g_m$ and $a_m$ --- the two terms of \eqref{eq:twoforces}
+--- is what makes the fitted drift a \emph{rule} (how far to move given this
+much new-task pressure against this much spring resistance at this $\beta$)
+rather than a route memorised for one task, and hence transferable to later
+boundaries.
+
+\subsection{IMF across the stream}
+
+Each boundary: traverse and record; fit $d_\phi$ forward and $d_\psi$ backward
+$(\proj_\Mcal)$; discard the recording so the next boundary regenerates the
+coupling under the drift just fitted $(\proj_\Rcal)$. The task stream supplies
+the iterations. Convergence is monitored by the cycle residual
+\begin{equation}
+\mathcal{C} = \frac{\Eb\lVert d_\phi(z) + d_\psi(z + d_\phi(z))\rVert^2}{\Eb\lVert d_\phi(z)\rVert^2},
+\end{equation}
+zero exactly on $\Mcal \cap \Rcal(Q)$.
+
+\subsection{One approximation, stated plainly}
+
+We run the deterministic flow: the $\sqrt2\,\mathrm{d}W_s$ of
+\eqref{eq:reference} is off. The path $\pi_\beta$ is unchanged but particles are
+transported rather than sampled, so diversity comes from initialisation and
+per-particle minibatches. This is why anchoring each particle to its own
+previous position rather than to the population mean mattered empirically
+(spread $0.029$ versus $0.001$).
+
+% ===========================================================================
+\section{What we measured}
+\label{sec:numbers}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+& forward expl.\ var. & backward expl.\ var. & cycle $\mathcal{C}$ \\
+\midrule
+after 1 round (bridge matching) & $0.286$ & $0.168$ & $0.908$ \\
+after 2 rounds (IMF) & $0.624$ & $0.666$ & $\mathbf{0.114}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+An eightfold reduction in the cycle residual: the iterations do move the fitted
+pair toward $\Mcal \cap \Rcal(Q)$.
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+traversal & updates per boundary & average accuracy \\
+\midrule
+reference chase & $2500$ & $0.9099$ \\
+learned drift, IMF $=2$ & $1250$ & $0.9086$ \\
+learned drift, IMF $=1$ & $625$ & $0.9066$ \\
+learned drift, IMF $=2$ & $625$ & $0.9039$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{remark}[The dissociation]
+Solving the bridge markedly better ($\mathcal{C}: 0.908 \to 0.114$) does not
+improve accuracy. Transport quality was not the binding constraint: accuracy
+comes from the path together with the Fisher geometry and the ensemble, and once
+on the path, traversing it more exactly buys \emph{compute} rather than
+retention. This is consistent with Kessler et al.\ \cite{kessler}, who find that
+even exact sequential Bayesian inference fails to prevent forgetting, attributing
+it to model misspecification rather than inference quality.
+\end{remark}
+
+\begin{thebibliography}{9}
+
+\bibitem{leonard}
+C.~L\'eonard, ``A survey of the Schr\"odinger problem and some of its connections
+with optimal transport,'' \emph{Discrete Contin.\ Dyn.\ Syst.}, vol.~34, no.~4,
+pp.~1533--1574, 2014.
+
+\bibitem{dsbm}
+Y.~Shi, V.~De~Bortoli, A.~Campbell, and A.~Doucet, ``Diffusion Schr\"odinger
+bridge matching,'' in \emph{Proc.\ NeurIPS}, 2023.
+
+\bibitem{flowmatch}
+Y.~Lipman, R.~T.~Q. Chen, H.~Ben-Hamu, M.~Nickel, and M.~Le, ``Flow matching for
+generative modeling,'' in \emph{Proc.\ ICLR}, 2023.
+
+\bibitem{aft}
+M.~Arbel, A.~G.~D.~G. Matthews, and A.~Doucet, ``Annealed flow transport Monte
+Carlo,'' in \emph{Proc.\ ICML}, 2021.
+
+\bibitem{kessler}
+S.~Kessler, A.~Cobb, T.~G.~J. Rudner, S.~Zohren, and S.~J. Roberts, ``On
+sequential Bayesian inference for continual learning,'' \emph{Entropy}, vol.~25,
+no.~6, 2023.
+
+\bibitem{vcl}
+C.~V. Nguyen, Y.~Li, T.~D. Bui, and R.~E. Turner, ``Variational continual
+learning,'' in \emph{Proc.\ ICLR}, 2018.
+
+\bibitem{ewc}
+J.~Kirkpatrick et al., ``Overcoming catastrophic forgetting in neural networks,''
+\emph{PNAS}, vol.~114, no.~13, pp.~3521--3526, 2017.
+
+\end{thebibliography}
+
+\end{document}

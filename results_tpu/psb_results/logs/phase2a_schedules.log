@@ -1,0 +1,44 @@
+[phase2a_schedules] 110 runs, 0 complete, 110 pending in 1 shape groups on 1 tpu device(s)
+  permuted T=10 K=128 psb M=25 n=100: 110 runs, 31/device, 4 chunk(s)
+[phase2a_schedules] workload ~110 base-run equivalents (1 = 10-task Permuted MNIST, K=128, 2,500 moves/boundary)
+[phase2a_schedules g1/1 c1/4] task 1/10 runs=31 116.6s mean avg acc 0.9783
+[phase2a_schedules g1/1 c1/4] task 2/10 runs=31 109.1s mean avg acc 0.9721
+[phase2a_schedules g1/1 c1/4] task 3/10 runs=31 109.0s mean avg acc 0.9656
+[phase2a_schedules g1/1 c1/4] task 4/10 runs=31 109.2s mean avg acc 0.9593
+[phase2a_schedules g1/1 c1/4] task 5/10 runs=31 109.4s mean avg acc 0.9542
+[phase2a_schedules g1/1 c1/4] task 6/10 runs=31 109.6s mean avg acc 0.9467
+[phase2a_schedules g1/1 c1/4] task 7/10 runs=31 109.9s mean avg acc 0.9386
+[phase2a_schedules g1/1 c1/4] task 8/10 runs=31 110.1s mean avg acc 0.9319
+[phase2a_schedules g1/1 c1/4] task 9/10 runs=31 110.3s mean avg acc 0.9234
+[phase2a_schedules g1/1 c1/4] task 10/10 runs=31 110.5s mean avg acc 0.9165
+[phase2a_schedules g1/1 c2/4] task 1/10 runs=31 115.8s mean avg acc 0.9783
+[phase2a_schedules g1/1 c2/4] task 2/10 runs=31 108.9s mean avg acc 0.9678
+[phase2a_schedules g1/1 c2/4] task 3/10 runs=31 109.0s mean avg acc 0.9595
+[phase2a_schedules g1/1 c2/4] task 4/10 runs=31 109.3s mean avg acc 0.9520
+[phase2a_schedules g1/1 c2/4] task 5/10 runs=31 109.5s mean avg acc 0.9457
+[phase2a_schedules g1/1 c2/4] task 6/10 runs=31 109.6s mean avg acc 0.9381
+[phase2a_schedules g1/1 c2/4] task 7/10 runs=31 109.9s mean avg acc 0.9293
+[phase2a_schedules g1/1 c2/4] task 8/10 runs=31 110.1s mean avg acc 0.9218
+[phase2a_schedules g1/1 c2/4] task 9/10 runs=31 110.2s mean avg acc 0.9130
+[phase2a_schedules g1/1 c2/4] task 10/10 runs=31 110.5s mean avg acc 0.9059
+[phase2a_schedules g1/1 c3/4] task 1/10 runs=31 115.8s mean avg acc 0.9783
+[phase2a_schedules g1/1 c3/4] task 2/10 runs=31 108.8s mean avg acc 0.9711
+[phase2a_schedules g1/1 c3/4] task 3/10 runs=31 109.1s mean avg acc 0.9641
+[phase2a_schedules g1/1 c3/4] task 4/10 runs=31 109.3s mean avg acc 0.9575
+[phase2a_schedules g1/1 c3/4] task 5/10 runs=31 109.5s mean avg acc 0.9520
+[phase2a_schedules g1/1 c3/4] task 6/10 runs=31 109.6s mean avg acc 0.9445
+[phase2a_schedules g1/1 c3/4] task 7/10 runs=31 109.9s mean avg acc 0.9361
+[phase2a_schedules g1/1 c3/4] task 8/10 runs=31 110.1s mean avg acc 0.9291
+[phase2a_schedules g1/1 c3/4] task 9/10 runs=31 110.2s mean avg acc 0.9206
+[phase2a_schedules g1/1 c3/4] task 10/10 runs=31 110.5s mean avg acc 0.9135
+[phase2a_schedules g1/1 c4/4] task 1/10 runs=17 85.3s mean avg acc 0.9782
+[phase2a_schedules g1/1 c4/4] task 2/10 runs=17 68.0s mean avg acc 0.9713
+[phase2a_schedules g1/1 c4/4] task 3/10 runs=17 53.9s mean avg acc 0.9630
+[phase2a_schedules g1/1 c4/4] task 4/10 runs=17 54.0s mean avg acc 0.9558
+[phase2a_schedules g1/1 c4/4] task 5/10 runs=17 54.1s mean avg acc 0.9498
+[phase2a_schedules g1/1 c4/4] task 6/10 runs=17 54.2s mean avg acc 0.9421
+[phase2a_schedules g1/1 c4/4] task 7/10 runs=17 54.3s mean avg acc 0.9333
+[phase2a_schedules g1/1 c4/4] task 8/10 runs=17 54.4s mean avg acc 0.9262
+[phase2a_schedules g1/1 c4/4] task 9/10 runs=17 54.5s mean avg acc 0.9179
+[phase2a_schedules g1/1 c4/4] task 10/10 runs=17 54.6s mean avg acc 0.9106
+[phase2a_schedules] done in 1.14 h

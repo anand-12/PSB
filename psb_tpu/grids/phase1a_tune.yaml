@@ -1,0 +1,13 @@
+# Phase 1a -- tune the baselines in our own code (same network, data and move
+# budget). lam is the EWC penalty strength / SI's c. gamma is EWC's Fisher
+# decay: 1.0 = standard cumulative EWC; 0.8 = the prior PSB uses (for the
+# ensemble control). Phase 1b picks the best values automatically.
+name: phase1a_tune
+defaults: {method: ewc}
+blocks:
+  - {name: ewc_k1, set: {particles: 1}, vary: {gamma: [0.8, 1.0], lam: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]}, seeds: 3}
+  - {name: ewc_k128, vary: {gamma: [0.8, 1.0], lam: [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]}, seeds: 3}
+  - {name: si_k1, set: {method: si, particles: 1}, vary: {lam: [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]}, seeds: 3}
+  - {name: si_k128, set: {method: si}, vary: {lam: [0.01, 0.1, 1.0, 10.0, 100.0, 1000.0]}, seeds: 3}
+  - {name: finetune_k1, set: {method: finetune, particles: 1}, seeds: 3}
+  - {name: finetune_k128, set: {method: finetune}, seeds: 3}

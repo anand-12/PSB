@@ -1,0 +1,65 @@
+\begin{table*}[t]
+  \centering
+  \caption{Final average accuracy $A_T$ (\%). Our results are mean $\pm$
+  s.d.\ over 20 paired seeds. $^\dagger$Published result.
+  $^\ddagger$Multi-head evaluation with task identifiers. Published Split
+  MNIST values use a $400$--$400$ network and report mean $\pm$ standard
+  error over 20 seeds~\cite{vandeven2019three,vandeven2022types}.
+  $^a$Split CIFAR-10 validation accuracy, mean $\pm$ s.d.\ over 10
+  runs~\cite{mazur2021target}. $^b$Split CIFAR-100 test accuracy with
+  pretrained features, mean $\pm$ standard error over 10
+  seeds~\cite{vandeven2022types}. $^c$Split CIFAR results with different
+  training protocols, mean $\pm$ standard error over 10
+  seeds~\cite{kessler2023sequential}.}
+  \label{tab:main_results}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lcccc@{}}
+  \hline
+  & \multicolumn{2}{c}{MNIST} & CIFAR-10 & CIFAR-100 \\
+  \cline{2-3}
+  Method & Permuted & Split & Split & Split \\
+  \hline
+  \multicolumn{5}{l}{Baselines (without coreset)} \\
+  EWC$^\dagger$~\cite{kirkpatrick2017ewc,nguyen2018vcl,vandeven2022types,mazur2021target}
+      & $84.0$ & $63.03\pm1.58$ & $19.24\pm0.11^{a}$ & $8.24\pm0.25^{b}$ \\
+  Online EWC~\cite{schwarz2018progress,vandeven2019three,mazur2021target}
+      & $90.1\pm0.7$ & $64.32\pm1.90^{\dagger}$ & $19.22\pm0.12^{\dagger a}$ & -- \\
+  SI~\cite{zenke2017si,vandeven2022types,mazur2021target}
+      & $87.8\pm0.5$ & $66.94\pm1.13^{\dagger}$
+      & $19.27\pm0.10^{\dagger a}$ & $8.10\pm0.24^{\dagger b}$ \\
+  VCL$^\dagger$~\cite{nguyen2018vcl}
+      & $\approx90$ & -- & -- & -- \\
+  Improved VCL$^\dagger$~\cite{swaroop2019improving}
+      & $93.0\pm1.0$ & -- & -- & -- \\
+  S-FSVI, no coreset$^\dagger$~\cite{rudner2022sfsvi}
+      & $84.06\pm0.46$ & -- & -- & -- \\
+  \hline
+  \multicolumn{5}{l}{Baselines (with coreset)} \\
+  Improved VCL$^\dagger$~\cite{swaroop2019improving}
+      & $94.6\pm0.3$ & -- & -- & -- \\
+  FRCL$^\dagger$~\cite{titsias2020frcl,rudner2022sfsvi}
+      & $94.30\pm0.06^{\ddagger}$ & -- & -- & -- \\
+  FROMP$^\dagger$~\cite{pan2020fromp,rudner2022sfsvi,vandeven2022types,kessler2023sequential}
+      & $94.90\pm0.04$ & $84.86\pm1.02$
+      & $48.92\pm10.86^{c}$ & -- \\
+  S-FSVI$^\dagger$~\cite{rudner2022sfsvi,kessler2023sequential}
+      & $95.76\pm0.02$ & --
+      & $50.85\pm3.87^{c}$ & $20.04\pm2.37^{c}$ \\
+  \hline
+  \multicolumn{5}{l}{PSB (Our method)} \\
+  $K=2$   & $82.7\pm1.7$ & $57.4\pm2.1$
+          & $20.7\pm1.3$ & $8.3\pm0.8$ \\
+  $K=8$   & $86.4\pm1.1$ & $60.3\pm1.3$
+          & $22.8\pm1.6$ & $9.8\pm0.9$ \\
+  $K=32$  & $88.7\pm0.9$ & $62.8\pm1.2$
+          & $25.6\pm1.1$ & $11.9\pm1.2$ \\
+  $K=64$  & $90.1\pm0.8$ & $64.1\pm1.0$
+          & $28.2\pm1.4$ & $13.6\pm1.0$ \\
+  $K=128$ & $93.8\pm0.2$ & $65.1\pm0.9$
+          & $31.4\pm1.0$ & $14.1\pm0.7$ \\
+  $K=256$ & $94.3\pm0.1$ & $65.1\pm0.4$
+          & $31.2\pm0.1$ & $14.8\pm0.2$ \\
+  \hline
+  \end{tabular*}
+\end{table*}

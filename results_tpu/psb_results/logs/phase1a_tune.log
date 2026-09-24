@@ -1,0 +1,79 @@
+[phase1a_tune] 114 runs, 0 complete, 114 pending in 6 shape groups on 1 tpu device(s)
+  permuted T=10 K=1 ewc M=25 n=100: 36 runs, 64/device, 1 chunk(s)
+  permuted T=10 K=128 ewc M=25 n=100: 36 runs, 31/device, 2 chunk(s)
+  permuted T=10 K=1 si M=25 n=100: 18 runs, 64/device, 1 chunk(s)
+  permuted T=10 K=128 si M=25 n=100: 18 runs, 26/device, 1 chunk(s)
+  permuted T=10 K=1 finetune M=25 n=100: 3 runs, 64/device, 1 chunk(s)
+  permuted T=10 K=128 finetune M=25 n=100: 3 runs, 31/device, 1 chunk(s)
+[phase1a_tune] workload ~57 base-run equivalents (1 = 10-task Permuted MNIST, K=128, 2,500 moves/boundary)
+[phase1a_tune g1/6 c1/1] task 1/10 runs=36 50.9s mean avg acc 0.9742
+[phase1a_tune g1/6 c1/1] task 2/10 runs=36 9.1s mean avg acc 0.9337
+[phase1a_tune g1/6 c1/1] task 3/10 runs=36 0.6s mean avg acc 0.8500
+[phase1a_tune g1/6 c1/1] task 4/10 runs=36 0.6s mean avg acc 0.7906
+[phase1a_tune g1/6 c1/1] task 5/10 runs=36 0.6s mean avg acc 0.7564
+[phase1a_tune g1/6 c1/1] task 6/10 runs=36 0.6s mean avg acc 0.7277
+[phase1a_tune g1/6 c1/1] task 7/10 runs=36 0.6s mean avg acc 0.7025
+[phase1a_tune g1/6 c1/1] task 8/10 runs=36 0.6s mean avg acc 0.6814
+[phase1a_tune g1/6 c1/1] task 9/10 runs=36 0.6s mean avg acc 0.6650
+[phase1a_tune g1/6 c1/1] task 10/10 runs=36 0.6s mean avg acc 0.6496
+[phase1a_tune g2/6 c1/2] task 1/10 runs=31 185.8s mean avg acc 0.9788
+[phase1a_tune g2/6 c1/2] task 2/10 runs=31 164.1s mean avg acc 0.9224
+[phase1a_tune g2/6 c1/2] task 3/10 runs=31 108.9s mean avg acc 0.8781
+[phase1a_tune g2/6 c1/2] task 4/10 runs=31 109.1s mean avg acc 0.8461
+[phase1a_tune g2/6 c1/2] task 5/10 runs=31 109.4s mean avg acc 0.8199
+[phase1a_tune g2/6 c1/2] task 6/10 runs=31 109.5s mean avg acc 0.8007
+[phase1a_tune g2/6 c1/2] task 7/10 runs=31 109.8s mean avg acc 0.7843
+[phase1a_tune g2/6 c1/2] task 8/10 runs=31 110.0s mean avg acc 0.7711
+[phase1a_tune g2/6 c1/2] task 9/10 runs=31 110.1s mean avg acc 0.7576
+[phase1a_tune g2/6 c1/2] task 10/10 runs=31 110.3s mean avg acc 0.7455
+[phase1a_tune g2/6 c2/2] task 1/10 runs=5 29.5s mean avg acc 0.9786
+[phase1a_tune g2/6 c2/2] task 2/10 runs=5 27.3s mean avg acc 0.7273
+[phase1a_tune g2/6 c2/2] task 3/10 runs=5 13.5s mean avg acc 0.5824
+[phase1a_tune g2/6 c2/2] task 4/10 runs=5 13.6s mean avg acc 0.4903
+[phase1a_tune g2/6 c2/2] task 5/10 runs=5 13.6s mean avg acc 0.4233
+[phase1a_tune g2/6 c2/2] task 6/10 runs=5 13.6s mean avg acc 0.3772
+[phase1a_tune g2/6 c2/2] task 7/10 runs=5 13.7s mean avg acc 0.3476
+[phase1a_tune g2/6 c2/2] task 8/10 runs=5 13.7s mean avg acc 0.3236
+[phase1a_tune g2/6 c2/2] task 9/10 runs=5 13.7s mean avg acc 0.3046
+[phase1a_tune g2/6 c2/2] task 10/10 runs=5 13.7s mean avg acc 0.2864
+[phase1a_tune g3/6 c1/1] task 1/10 runs=18 31.8s mean avg acc 0.9742
+[phase1a_tune g3/6 c1/1] task 2/10 runs=18 14.1s mean avg acc 0.9139
+[phase1a_tune g3/6 c1/1] task 3/10 runs=18 0.3s mean avg acc 0.8346
+[phase1a_tune g3/6 c1/1] task 4/10 runs=18 0.3s mean avg acc 0.7737
+[phase1a_tune g3/6 c1/1] task 5/10 runs=18 0.3s mean avg acc 0.7324
+[phase1a_tune g3/6 c1/1] task 6/10 runs=18 0.3s mean avg acc 0.7028
+[phase1a_tune g3/6 c1/1] task 7/10 runs=18 0.3s mean avg acc 0.6770
+[phase1a_tune g3/6 c1/1] task 8/10 runs=18 0.3s mean avg acc 0.6526
+[phase1a_tune g3/6 c1/1] task 9/10 runs=18 0.4s mean avg acc 0.6333
+[phase1a_tune g3/6 c1/1] task 10/10 runs=18 0.4s mean avg acc 0.6140
+[phase1a_tune g4/6 c1/1] task 1/10 runs=18 93.2s mean avg acc 0.9786
+[phase1a_tune g4/6 c1/1] task 2/10 runs=18 91.6s mean avg acc 0.9477
+[phase1a_tune g4/6 c1/1] task 3/10 runs=18 60.9s mean avg acc 0.8756
+[phase1a_tune g4/6 c1/1] task 4/10 runs=18 61.0s mean avg acc 0.8262
+[phase1a_tune g4/6 c1/1] task 5/10 runs=18 61.1s mean avg acc 0.7896
+[phase1a_tune g4/6 c1/1] task 6/10 runs=18 61.2s mean avg acc 0.7641
+[phase1a_tune g4/6 c1/1] task 7/10 runs=18 61.2s mean avg acc 0.7403
+[phase1a_tune g4/6 c1/1] task 8/10 runs=18 61.3s mean avg acc 0.7204
+[phase1a_tune g4/6 c1/1] task 9/10 runs=18 61.4s mean avg acc 0.7017
+[phase1a_tune g4/6 c1/1] task 10/10 runs=18 61.5s mean avg acc 0.6856
+[phase1a_tune g5/6 c1/1] task 1/10 runs=3 4.9s mean avg acc 0.9742
+[phase1a_tune g5/6 c1/1] task 2/10 runs=3 5.6s mean avg acc 0.9075
+[phase1a_tune g5/6 c1/1] task 3/10 runs=3 0.1s mean avg acc 0.8032
+[phase1a_tune g5/6 c1/1] task 4/10 runs=3 0.1s mean avg acc 0.7156
+[phase1a_tune g5/6 c1/1] task 5/10 runs=3 0.1s mean avg acc 0.6258
+[phase1a_tune g5/6 c1/1] task 6/10 runs=3 0.1s mean avg acc 0.5855
+[phase1a_tune g5/6 c1/1] task 7/10 runs=3 0.1s mean avg acc 0.5165
+[phase1a_tune g5/6 c1/1] task 8/10 runs=3 0.1s mean avg acc 0.4973
+[phase1a_tune g5/6 c1/1] task 9/10 runs=3 0.1s mean avg acc 0.4744
+[phase1a_tune g5/6 c1/1] task 10/10 runs=3 0.1s mean avg acc 0.4386
+[phase1a_tune g6/6 c1/1] task 1/10 runs=3 35.3s mean avg acc 0.9786
+[phase1a_tune g6/6 c1/1] task 2/10 runs=3 20.5s mean avg acc 0.9453
+[phase1a_tune g6/6 c1/1] task 3/10 runs=3 7.0s mean avg acc 0.8596
+[phase1a_tune g6/6 c1/1] task 4/10 runs=3 7.0s mean avg acc 0.8143
+[phase1a_tune g6/6 c1/1] task 5/10 runs=3 7.0s mean avg acc 0.7776
+[phase1a_tune g6/6 c1/1] task 6/10 runs=3 7.0s mean avg acc 0.7391
+[phase1a_tune g6/6 c1/1] task 7/10 runs=3 7.0s mean avg acc 0.6695
+[phase1a_tune g6/6 c1/1] task 8/10 runs=3 7.1s mean avg acc 0.6249
+[phase1a_tune g6/6 c1/1] task 9/10 runs=3 7.1s mean avg acc 0.5804
+[phase1a_tune g6/6 c1/1] task 10/10 runs=3 7.1s mean avg acc 0.5537
+[phase1a_tune] done in 0.69 h

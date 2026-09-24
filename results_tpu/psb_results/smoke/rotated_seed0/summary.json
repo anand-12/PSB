@@ -1,0 +1,140 @@
+{
+ "config": {
+  "benchmark": "rotated",
+  "tasks": 3,
+  "max_angle": 180.0,
+  "split_mode": "domain",
+  "permutation_seed": 0,
+  "width": 100,
+  "depth": 2,
+  "particles": 8,
+  "init": "independent",
+  "init_modes": 8,
+  "method": "psb",
+  "stages": 5,
+  "moves_per_stage": 10,
+  "batch_size": 64,
+  "first_task_steps": 200,
+  "fisher_examples": 1024,
+  "fisher_batch_size": 256,
+  "probe_batch_size": 256,
+  "lam": 4.0,
+  "gamma": 0.8,
+  "lr": 0.001,
+  "lr_decay": 0.0,
+  "floor": 0.001,
+  "jitter": 0.02,
+  "schedule_param": 1.0,
+  "laplace_temperature": 1.0,
+  "si_xi": 0.1,
+  "schedule": "linear",
+  "seed": 0,
+  "eval_every": 1,
+  "eval_batch_size": 1000,
+  "checkpoint_every": 1,
+  "grid": "smoke",
+  "block": "rotated",
+  "tag": "rotated",
+  "varied": {}
+ },
+ "complete": true,
+ "final": {
+  "average_accuracy": 0.5935000280539194,
+  "forgetting": 0.39455001056194305,
+  "backward_transfer": -0.39455001056194305,
+  "acquisition": 0.8565333684285482
+ },
+ "history": [
+  {
+   "task": 1,
+   "acquisition": 0.924500048160553,
+   "full_eval": true,
+   "average_accuracy": 0.924500048160553,
+   "forgetting": 0.0,
+   "backward_transfer": 0.0,
+   "task_accuracies": [
+    0.924500048160553
+   ],
+   "task_seconds": 7.344959259033203,
+   "elapsed_seconds": 7.344959259033203
+  },
+  {
+   "task": 2,
+   "acquisition": 0.8712500333786011,
+   "full_eval": true,
+   "average_accuracy": 0.7707500159740448,
+   "forgetting": 0.20100003480911255,
+   "backward_transfer": -0.20100003480911255,
+   "task_accuracies": [
+    0.7235000133514404,
+    0.8180000185966492
+   ],
+   "task_seconds": 0.2868204116821289,
+   "elapsed_seconds": 7.631779670715332,
+   "betas": [
+    0.20000000298023224,
+    0.4000000059604645,
+    0.6000000238418579,
+    0.800000011920929,
+    1.0
+   ],
+   "stage_variance": [
+    0.04463735967874527,
+    0.013639338314533234,
+    0.002415543422102928,
+    0.0028056995943188667,
+    0.002517787739634514
+   ]
+  },
+  {
+   "task": 3,
+   "acquisition": 0.8565333684285482,
+   "full_eval": true,
+   "average_accuracy": 0.5935000280539194,
+   "forgetting": 0.39455001056194305,
+   "backward_transfer": -0.39455001056194305,
+   "task_accuracies": [
+    0.37700000405311584,
+    0.5764000415802002,
+    0.8271000385284424
+   ],
+   "task_seconds": 0.0065691471099853516,
+   "elapsed_seconds": 7.638348817825317,
+   "betas": [
+    0.20000000298023224,
+    0.4000000059604645,
+    0.6000000238418579,
+    0.800000011920929,
+    1.0
+   ],
+   "stage_variance": [
+    0.020053714513778687,
+    0.00877615436911583,
+    0.007523291278630495,
+    0.0027450150810182095,
+    0.0008447611471638083
+   ]
+  }
+ ],
+ "accuracy_matrix": [
+  [
+   0.924500048160553,
+   null,
+   null
+  ],
+  [
+   0.7235000133514404,
+   0.8180000185966492,
+   null
+  ],
+  [
+   0.37700000405311584,
+   0.5764000415802002,
+   0.8271000385284424
+  ]
+ ],
+ "parameter_count_per_network": 89610,
+ "wall_seconds": 7.638348817825317,
+ "devices": 1,
+ "platform": "tpu"
+}

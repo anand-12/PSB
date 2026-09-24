@@ -1,0 +1,22 @@
+{"method": "bwd", "tag": "I_ipf4w", "seed": 0, "task": 1, "average_accuracy": 0.9793999791145325, "forgetting": 0.0, "backward_transfer": 0.0, "predictive_loss": 0.06186461181640625, "task_accuracies": [0.9794], "particles": 32, "transition_mode": "bridge", "anchor_strength": 4.0, "correction_weight": 0.0, "latent_rank": null, "elapsed_seconds": 0.2645115852355957, "precision_mean": 1.0, "precision_max": 237.75704956054688, "precision_median": 0.21741990745067596, "imf_iteration": 0, "fisher_examples": 20224, "fisher_raw_mean": 0.0005369000136852264, "fisher_raw_max": 0.12765176594257355, "fisher_participation_ratio": 0.06132934242486954}
+{"method": "bwd", "tag": "I_ipf4w", "seed": 0, "task": 2, "average_accuracy": 0.9733499884605408, "forgetting": 0.001699984073638916, "backward_transfer": -0.001699984073638916, "predictive_loss": 0.09410303649902343, "task_accuracies": [0.9777, 0.969], "particles": 32, "transition_mode": "bridge", "anchor_strength": 4.0, "correction_weight": 0.0, "latent_rank": null, "elapsed_seconds": 59.763652086257935, "precision_mean": 1.8000000715255737, "precision_max": 370.8373107910156, "precision_median": 0.9546726942062378, "drift_layers": 3, "drift_samples": 42000, "drift_initial_loss": 0.0009306384599767625, "drift_final_loss": 0.00026287071737366813, "drift_explained": 0.7175372298924421, "drift_direction": "forward", "drift_iteration": 1, "drift_backward_explained": 0.7565989839221169, "bridge_absolute": 4.140005364661192e-05, "bridge_relative": 0.09326166809521788, "imf_iteration": 1, "fisher_examples": 20224, "fisher_raw_mean": 0.0019884658977389336, "fisher_raw_max": 0.35917991399765015, "fisher_participation_ratio": 0.10736843943595886, "transition_final_loss": 0.11451359838247299, "transition_drift_step_rms": 0.0, "transition_kernel_step_rms": 0.0024310399452224375, "transition_anchor_pull_rms": 1.698938553699918e-05, "transition_particle_spread": 0.02285798452794552, "transition_recorded_tokens": 42000, "transition_used_drift": false}
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "/usr/lib/python3.10/runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "/export/home/anandr/guided-weight-diffusion-cl/bwd_cl/train.py", line 524, in <module>
+    main()
+  File "/export/home/anandr/guided-weight-diffusion-cl/bwd_cl/train.py", line 519, in main
+    summary_path = run(parse_args())
+  File "/export/home/anandr/guided-weight-diffusion-cl/bwd_cl/train.py", line 260, in run
+    drifts, drift_report = train_bridge_drift(
+  File "/export/home/anandr/guided-weight-diffusion-cl/bwd_cl/bridge.py", line 235, in train_bridge_drift
+    loss.backward()
+  File "/usr/lib/python3/dist-packages/torch/_tensor.py", line 648, in backward
+    torch.autograd.backward(
+  File "/usr/lib/python3/dist-packages/torch/autograd/__init__.py", line 353, in backward
+    _engine_run_backward(
+  File "/usr/lib/python3/dist-packages/torch/autograd/graph.py", line 824, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn

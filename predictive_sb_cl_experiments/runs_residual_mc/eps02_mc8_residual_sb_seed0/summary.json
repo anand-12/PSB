@@ -1,0 +1,90 @@
+{
+  "method": "residual_sb",
+  "seed": 0,
+  "final": {
+    "task": 5,
+    "average_accuracy": 0.9485999941825867,
+    "forgetting": 0.02437502145767212,
+    "acquisition": 0.9680999517440796,
+    "accuracies": [
+      0.956,
+      0.9248,
+      0.9379,
+      0.9571,
+      0.9672
+    ],
+    "nlls": [
+      0.1858952880859375,
+      0.36918701171875,
+      0.29342528076171875,
+      0.18963017578125,
+      0.12865987701416015
+    ],
+    "eces": [
+      0.066129669547081,
+      0.14755463600158691,
+      0.11483008414506912,
+      0.0708371177315712,
+      0.03149086609482765
+    ],
+    "diagnostics": {
+      "old_probes": 256,
+      "current_probes": 64,
+      "predictive_rank": 15,
+      "source_current_accuracy": 0.1875,
+      "target_current_accuracy": 0.546875,
+      "target_old_mean_kl": 0.00012539698218461126,
+      "coupling": "sinkhorn_sb",
+      "sinkhorn_epsilon": 3.366079330444336,
+      "sinkhorn_marginal_error": 3.725290298461914e-08,
+      "coupling_entropy": 0.5636472702026367,
+      "birkhoff_components": 43,
+      "path": "rao_blackwellized_residual_bridge",
+      "bridge_mc_samples": 8,
+      "residual_mean_schedule": "direct",
+      "source_residual_rms": 1.313907265663147,
+      "target_residual_rms": 1.2852977514266968,
+      "clock_first": 0.5623413324356079,
+      "clock_penultimate": 0.9740037322044373,
+      "endpoint_rms_error": 0.1385737657546997,
+      "lift_endpoint_kl": 0.003867674618959427
+    }
+  },
+  "accuracy_matrix": [
+    [
+      0.977400004863739,
+      NaN,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.972599983215332,
+      0.964900016784668,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9692000150680542,
+      0.9563999772071838,
+      0.9641000032424927,
+      NaN,
+      NaN
+    ],
+    [
+      0.9642000198364258,
+      0.9465000033378601,
+      0.9587000012397766,
+      0.9668999910354614,
+      NaN
+    ],
+    [
+      0.9559999704360962,
+      0.9247999787330627,
+      0.9379000067710876,
+      0.957099974155426,
+      0.967199981212616
+    ]
+  ]
+}

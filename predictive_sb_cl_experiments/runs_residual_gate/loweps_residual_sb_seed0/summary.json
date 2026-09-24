@@ -1,0 +1,89 @@
+{
+  "method": "residual_sb",
+  "seed": 0,
+  "final": {
+    "task": 5,
+    "average_accuracy": 0.9474000334739685,
+    "forgetting": 0.025400012731552124,
+    "acquisition": 0.9677200317382812,
+    "accuracies": [
+      0.9534,
+      0.9238,
+      0.9338,
+      0.96,
+      0.966
+    ],
+    "nlls": [
+      0.18707576293945313,
+      0.3762504699707031,
+      0.28826866455078126,
+      0.18241386413574218,
+      0.13012382202148437
+    ],
+    "eces": [
+      0.06199286878108978,
+      0.15220953524112701,
+      0.10577581822872162,
+      0.06726627051830292,
+      0.034111831337213516
+    ],
+    "diagnostics": {
+      "old_probes": 256,
+      "current_probes": 64,
+      "predictive_rank": 15,
+      "source_current_accuracy": 0.140625,
+      "target_current_accuracy": 0.421875,
+      "target_old_mean_kl": 0.0001221775746671483,
+      "coupling": "sinkhorn_sb",
+      "sinkhorn_epsilon": 0.08154930919408798,
+      "sinkhorn_marginal_error": 0.0,
+      "coupling_entropy": 0.5,
+      "birkhoff_components": 1,
+      "path": "stochastic_residual_bridge",
+      "residual_mean_schedule": "direct",
+      "source_residual_rms": 1.3313231468200684,
+      "target_residual_rms": 1.3014978170394897,
+      "clock_first": 0.5623413324356079,
+      "clock_penultimate": 0.9740037322044373,
+      "endpoint_rms_error": 3.018852112290915e-06,
+      "lift_endpoint_kl": 0.004410701990127564
+    }
+  },
+  "accuracy_matrix": [
+    [
+      0.977400004863739,
+      NaN,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9721999764442444,
+      0.9656999707221985,
+      NaN,
+      NaN,
+      NaN
+    ],
+    [
+      0.9688000082969666,
+      0.9553999900817871,
+      0.9639000296592712,
+      NaN,
+      NaN
+    ],
+    [
+      0.9635000228881836,
+      0.9437000155448914,
+      0.9549999833106995,
+      0.9656000137329102,
+      NaN
+    ],
+    [
+      0.9534000158309937,
+      0.923799991607666,
+      0.9337999820709229,
+      0.9599999785423279,
+      0.9660000205039978
+    ]
+  ]
+}

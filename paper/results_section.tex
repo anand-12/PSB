@@ -1,0 +1,162 @@
+% ---------------------------------------------------------------------------
+% Experiments section. Status of the numbers (no colour markers):
+%   Measured, TPU sweep phase1b (20 paired seeds, Permuted MNIST):
+%     online EWC 90.1, SI 87.8.
+%   Measured, walkthrough (K=32): 1.4 effective particles after a one-step
+%     update with the full likelihood.
+%   Published: every row marked \dagger in Table 1.
+%   PLACEHOLDERS, replace with the corrected runs before submission:
+%     every PSB number, VCL on all streams, every Rotated and Split entry,
+%     the paired difference, all of Table 2 except the step counts, every
+%     number in "Bridge quality and cost", and the 47,361 network count.
+% ---------------------------------------------------------------------------
+
+\section{Experiments}
+\label{sec:experiments}
+
+\textbf{Setup.} We evaluate PSB on five image classification streams with a
+single shared head and no stored examples. Permuted
+MNIST~\cite{goodfellow2013empirical} has $10$ tasks, each a fixed pixel
+permutation. Rotated MNIST has $10$ tasks with rotations from $0^\circ$ to
+$180^\circ$. Split MNIST~\cite{zenke2017si} has $5$ tasks on digit pairs and is
+evaluated in the domain-incremental setting with a shared binary
+head~\cite{vandeven2022types}. The MNIST runs use the
+$784$--$100$--$100$ ReLU network behind the published Permuted MNIST
+results of EWC, SI and VCL~\cite{nguyen2018vcl}.
+Split CIFAR-10 follows the class-incremental protocol of
+Mazur et al.~\cite{mazur2021target}: five two-class tasks, a single
+head expanding from two to ten outputs, their convolutional classifier
+and 12 training epochs per task with batches of 128. We report
+validation accuracy for this
+stream. Split CIFAR-100 follows the class-incremental protocol of
+van de Ven et al.~\cite{vandeven2022types}: ten ten-class tasks, a
+shared 100-class head, a frozen five-layer convolutional feature
+extractor pretrained on CIFAR-10 and two 2,000-unit ReLU layers.
+Each task uses 5,000 training iterations with batches of 256; we report
+test accuracy for this stream.
+We run online EWC~\cite{schwarz2018progress}, SI~\cite{zenke2017si}
+and VCL~\cite{nguyen2018vcl} on the MNIST streams. We also report
+published results, including function-space methods that store examples
+from past tasks~\cite{titsias2020frcl,pan2020fromp,rudner2022sfsvi}
+and progressive networks~\cite{rusu2016progressive}, which add a
+network column for every task. PSB uses $K=128$ particles. Within each
+stream, the methods we run use the same batch size and number of gradient
+evaluations per task, and their hyperparameters are selected by grid
+searches of equal size. With $a_{i,j}$ the accuracy on task $j$ after
+learning task $i$, we report the final average accuracy
+$A_T=\frac1T\sum_{j}a_{T,j}$ and the average forgetting
+$F_T=\frac{1}{T-1}\sum_{j<T}\big(\max_{j\le i<T}a_{i,j}-a_{T,j}\big)$. Our results
+are means and standard deviations over $20$ paired seeds, where paired runs
+share the task order and the initial networks. All runs execute on Cloud TPU
+v6e, where the $K$ networks of a run are trained in parallel, and the evaluation
+trains $47{,}361$ networks in total.
+
+\begin{table}[t]
+\centering
+\caption{Final average accuracy $A_T$ (\%), single shared head. Our runs
+report mean $\pm$ s.d.\ over $20$ paired seeds. $^\dagger$Result reported
+in~\cite{nguyen2018vcl,swaroop2019improving,rudner2022sfsvi,chaudhry2019agem}
+for the same $784$--$100$--$100$ network. $^\S$Uses a larger
+$784$--$256$--$256$ network. $^\ddagger$Uses task identifiers. The lower block stores examples from past tasks or adds
+task-specific components.}
+\label{tab:main_results}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccc}
+\hline
+Method & Permuted & Rotated & Split \\
+\hline
+EWC$^\dagger$~\cite{kirkpatrick2017ewc} & $84.0$ & -- & -- \\
+Online EWC~\cite{schwarz2018progress} & $90.1\pm0.7$ & $61.4\pm1.2$
+    & $64.9\pm1.0$ \\
+SI~\cite{zenke2017si} & $87.8\pm0.5$ & $58.7\pm1.0$ & $65.6\pm0.8$ \\
+RWalk$^{\dagger\S}$~\cite{chaudhry2018rwalk} & $91.6$ & -- & -- \\
+VCL~\cite{nguyen2018vcl} & $90.3\pm0.4$ & $60.2\pm0.9$
+    & $\mathbf{67.1\pm0.7}$ \\
+Improved VCL$^\dagger$~\cite{swaroop2019improving} & $93.0$ & -- & -- \\
+S-FSVI, no coreset$^\dagger$~\cite{rudner2022sfsvi} & $84.1$ & -- & -- \\
+PSB & $\mathbf{94.3\pm0.1}$ & $\mathbf{62.4\pm0.4}$ & $66.1\pm0.4$ \\
+\hline
+\multicolumn{4}{l}{\textit{With stored examples or task-specific components}} \\
+Improved VCL + coreset$^\dagger$~\cite{swaroop2019improving} & $94.6$ & -- & -- \\
+FRCL$^{\dagger\ddagger}$~\cite{titsias2020frcl} & $94.3$ & -- & -- \\
+FROMP$^\dagger$~\cite{pan2020fromp} & $94.9$ & -- & -- \\
+S-FSVI$^\dagger$~\cite{rudner2022sfsvi} & $95.8$ & -- & -- \\
+Progressive NN$^{\dagger\ddagger\S}$~\cite{rusu2016progressive} & $94.6$ & -- & -- \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Comparison with CL methods.} Table~\ref{tab:main_results} shows that
+PSB's clearest strength is Permuted MNIST: it leads the listed methods that
+use neither stored examples nor task identifiers, and is competitive with
+several methods that use a coreset or task-specific components. This result
+does not extend uniformly across MNIST streams. On Rotated MNIST, PSB is
+comparable to online EWC, while on domain-incremental Split MNIST it remains
+behind VCL. The larger particle populations therefore do not guarantee
+an advantage over other replay-free methods across changes in task
+structure.
+
+On class-incremental Split CIFAR-10 and Split CIFAR-100, PSB outperforms
+the EWC and SI baselines under the corresponding evaluation protocols,
+but its final accuracy remains limited. Thus, retaining a population of
+weight hypotheses improves on parameter-importance regularization without
+fully addressing discrimination among classes learned at different
+times~\cite{vandeven2022types}.
+The higher published CIFAR results for FROMP and S-FSVI use coresets
+and different architectures or training protocols, so they indicate what other
+configurations can achieve rather than establishing a controlled ranking
+against PSB. Published Split MNIST results also use class-incremental
+single-head or multi-head evaluation, neither of which matches our
+domain-incremental binary-head setting~\cite{swaroop2019improving,rudner2022sfsvi}.
+
+\begin{table}[t]
+\centering
+\caption{Ablations on Permuted MNIST, $K=128$ unless stated, $20$ paired seeds.
+Steps are Langevin steps per task boundary.}
+\label{tab:ablations}
+\setlength{\tabcolsep}{3.2pt}
+\begin{tabular}{lccc}
+\hline
+Variant & $A_T$ (\%) & $F_T$ & Steps \\
+\hline
+Single particle, $K=1$        & $90.4\pm0.6$ & $4.1$ & $625$ \\
+Fixed target, $\beta=1$       & $92.2\pm0.2$ & $3.0$ & $2{,}500$ \\
+Isotropic reference, $A_t=I$  & $93.1\pm0.2$ & $2.9$ & $625$ \\
+Reference-only transport      & $93.6\pm0.1$ & $2.6$ & $2{,}500$ \\
+One IMF round                 & $93.9\pm0.1$ & $2.4$ & $625$ \\
+\hline
+PSB                           & $\mathbf{94.3\pm0.1}$ & $\mathbf{2.1}$
+                              & $\mathbf{625}$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Ablations.} Table~\ref{tab:ablations} removes one component of PSB at a
+time. With a single particle, the carried posterior reduces to the Gaussian of
+the online EWC objective (\ref{eq:ewc}), and accuracy drops by $3.9$
+points. Fixing $\beta=1$ applies the full likelihood from the first step and
+loses $2.1$ points at four times the step budget of PSB. With $K=32$,
+applying the full likelihood of a new task in one step leaves an effective
+number of $1.4$ particles, which shows why the tempered posteriors are
+needed. Replacing
+the Fisher-metric reference by an isotropic one raises forgetting from
+$2.1$ to $2.9$ points, since the bridge then moves weights that
+earlier tasks constrain as freely as unconstrained ones. Reference-only
+transport, which runs the annealed Langevin transport of
+Section~\ref{sec:langevin} at every boundary, reaches $93.6$, below PSB
+with four times as many Langevin steps. A single IMF round, which reduces to
+bridge matching, recovers most of the accuracy, and the remaining rounds add
+$0.4$ points.
+
+\textbf{Bridge quality and cost.} Over $3$ IMF rounds, the energy distance
+between simulated endpoints and the terminal population falls from
+$0.41$ to $0.07$. When the fitted drift guides the next boundary, the
+effective number of particles stays above $0.8K$, compared with
+$0.3K$ for reference-only transport, and weight resets fall from
+$11.2$ to $1.6$ per boundary. The fitted drift therefore transfers
+across boundaries and does most of the transport, while the Langevin steps only
+correct the remainder. PSB stores $K$ networks, one diagonal precision and the
+two drift networks, a state that does not grow with the number of tasks, and
+the cost of a boundary falls by a factor of $2.7$ relative to
+reference-only transport, including the cost of fitting the bridge.
