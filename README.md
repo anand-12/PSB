@@ -1,191 +1,210 @@
-# Guided Weight Diffusion for Continual Learning
+# Posterior Schrödinger Bridges for Continual Learning
 
-## Latest iteration: Sequential Posterior-Score Distillation
+Research code and manuscript for **Posterior Schrödinger Bridges (PSB)**,
+by Anand Ravishankar and Petar M. Djurić, Stony Brook University.
 
-The recommended method is now `--method spsd`. Instead of discarding the old
-score and reconstructing the entire history from only the latest `K` networks,
-SPSD trains a single successor score on the sequential Bayesian target
-`s_t(theta) = s_{t-1}(theta) - grad_theta L_t(theta)`. An ordinary denoising
-term on the newly updated networks supplies current-task support. The old score
-is then discarded, so storage remains fixed, replay-free, and task agnostic.
+The proposed method represents accumulated knowledge with a fixed population
+of neural networks and a shared diagonal precision. New tasks update this
+population through tempered likelihood adaptation and a quadratic constraint
+toward each network's carried parameters. The paper develops a Schrödinger
+bridge formulation for transport between successive population distributions.
 
-Run the two-seed, two-GPU experiment with:
+The [manuscript](paper/main.tex) describes the proposed framework. The runnable
+[TPU workflow](psb_tpu/README.md) implements its tempered Adam-plus-proximal
+particle-update component. The bridge model below describes the proposed
+extension, rather than a completed IMF implementation.
 
-```bash
-cd /export/home/anandr/guided-weight-diffusion-cl
-bash scripts/run_spsd_two_gpu.sh
-```
+## Posterior representation
 
-This is a new experimental iteration; it has correctness tests but no claimed
-accuracy until the full runs complete.
+A particle is the complete parameter vector of one classifier. After task
+\(t\), the population contains \(K\) vectors \(\theta^{(t,k)}\).
+The paper represents the carried posterior by the Gaussian mixture
 
-This repository implements **GWD**, a replay-free continual-learning method for
-Permuted MNIST. It contains an explicit forward noising process, a learned score
-model, and likelihood-guided reverse denoising in neural-network parameter space.
+$$
+\hat q^{(t)}(\theta)
+=\frac1K\sum_{k=1}^{K}
+\mathcal N\!\left(\theta\mid\theta^{(t,k)},(A^{(t)})^{-1}\right).
+$$
 
-The default classifier is the same-sized MLP commonly used in VCL experiments:
-784 inputs, two hidden layers of 100 ReLU units, and one shared 10-class output.
-There are 89,610 parameters per network. The method never stores examples and
-does not create task-specific heads, adapters, masks, or posterior components.
+The network vectors define component centers. The diagonal precision controls
+how strongly subsequent updates constrain displacement in each parameter
+direction. The particle count stays fixed throughout the task stream.
 
-## What the algorithm does
+Predictions average the classifiers' probabilities,
 
-For Task 1, GWD:
+$$
+p(y\mid x)\approx\frac1K\sum_{k=1}^{K}
+p(y\mid x,\theta^{(t,k)}).
+$$
 
-1. trains one classifier;
-2. makes `K` copies of its trained parameter vector;
-3. independently perturbs the copies; and
-4. briefly refines every copy on Task 1.
+Training uses the current task's examples. The carried population and precision
+summarize earlier tasks for subsequent updates.
 
-The resulting `K` nearby networks are treated as samples from a local solution
-distribution. Their parameter vectors are normalized tensor-by-tensor and
-embedded into a low-dimensional PCA space. A noise-conditional neural network
-is trained by denoising score matching on Gaussian-corrupted embeddings.
+## Tempered particle updates
 
-When Task `t` arrives, the retained networks are explicitly corrupted by the
-forward variance-exploding process
+For task \(t+1\), particle \(k\) retains its previous parameter vector as the
+anchor \(c=\theta^{(t,k)}\). At temperature \(s\), the intended regularized
+objective is
 
-```text
-u_sigma = u_0 + sqrt(tau^2 + sigma^2) epsilon,   epsilon ~ N(0,I).
-```
+$$
+J_s^{(t,k)}(\theta)
+=s\,\bar{\mathcal L}^{(t+1)}(\theta)
++\frac12\|\theta-c\|_{R^{(t)}}^2,
+$$
 
-Here `tau` is a fixed, stream-wide solution-kernel width that gives the old
-distribution full support. The process is then reversed. Every reverse step
-alternates an old-posterior denoising operator and an Adam-preconditioned
-current-task data operator:
+where the loss is the mean negative log-likelihood and \(R^{(t)}\) is the
+diagonal penalty precision. The default linear schedule uses \(s_m=m/M\),
+with \(n\) updates per temperature increment.
 
-```text
-u_prior = ReverseStep(u, s_old, sigma)
-u_next  = u_prior - eta(sigma) AdamDirection(grad_u L_t(u_prior)).
-```
+Each update computes an Adam direction \(d_r\) from the new-task likelihood
+gradients and then applies the quadratic penalty through a proximal step:
 
-The first operator attracts parameters toward networks that solved Tasks
-`1:(t-1)`; the second makes sufficiently strong progress on Task `t`. The
-original additive score-guidance update remains available with
-`--guidance-mode score` as an ablation.
-After reversal, the old score model is discarded and a new one is fitted to the
-updated `K` networks. Thus the persistent state is shared across the stream; it
-does not grow with the number of tasks.
+$$
+\tilde\theta=\theta_r-s_m\eta_r d_r,
+\qquad
+\theta_{r+1}
+=\frac{\tilde\theta+\eta_r R^{(t)}c}
+       {1+\eta_r R^{(t)}}.
+$$
 
-The proximal data direction is additionally shaped by one online diagonal
-Fisher statistic. Parameters that were sensitive on earlier tasks receive small
-mobility, while flatter directions receive larger mobility. The statistic is
-updated from the current task before its data disappear and accumulated in one
-fixed-size vector; no per-task Fisher matrices are retained.
+Products and divisions in the proximal expression are coordinatewise, using
+the diagonal entries of the penalty precision. Scaling the Adam displacement
+preserves the temperature's effect despite Adam's gradient normalization.
+The proximal step contracts displacement from the anchor most strongly in
+high-precision directions.
 
-See [METHOD.md](METHOD.md) for the mathematical construction and implementation
-details.
+For a fixed Adam direction, the combined update exactly minimizes the local
+surrogate
 
-## Installation
+$$
+s_m d_r^\top(z-\theta_r)
++\frac{1}{2\eta_r}\|z-\theta_r\|^2
++\frac12\|z-c\|_{R^{(t)}}^2.
+$$
 
-Use the existing environment that already contains CUDA-enabled PyTorch:
+This characterizes the adaptive split update. Exactness refers to this local
+subproblem, with the history-dependent Adam direction held fixed.
 
-```bash
-cd /export/home/anandr/guided-weight-diffusion-cl
-python -m pip install -e .
-```
+The terminal particle is the network parameter vector after the final update
+on the task. Terminal particles become the anchors for the next task and have
+uniform weights in the predictive ensemble.
 
-## Required first run: three-task posterior calibration
+### Precision in the TPU implementation
 
-Before another ten-task run, compare two plausible normalized posterior step
-sizes on an identical seed and task sequence:
+The TPU implementation normalizes each task's diagonal empirical Fisher by
+its coordinate mean and accumulates
 
-```bash
-cd /export/home/anandr/guided-weight-diffusion-cl
-bash scripts/run_posterior_probe_two_gpu.sh
-```
+$$
+h^{(t)}=\gamma h^{(t-1)}
++\frac{F^{(t)}}{\operatorname{mean}(F^{(t)})},
+\qquad
+R^{(t)}=\lambda\,\operatorname{diag}(h^{(t)}+\epsilon).
+$$
 
-The two printed records must show that Tasks 2 and 3 are actually acquired; low
-forgetting alone is not sufficient. Select the learning rate with the higher
-three-task average subject to retaining strong Task-1 accuracy.
+The code applies a numerical floor to the normalization denominator.
+The configuration fields `lam`, `gamma`, and `floor` specify the penalty
+strength, decay, and isotropic floor. This is the implemented regularization
+scale. The manuscript's Bayesian precision based on task-size-weighted Fisher
+information is a separate modeling definition.
 
-## Full run: two seeds on two GPUs
+## Proposed bridge model
 
-```bash
-cd /export/home/anandr/guided-weight-diffusion-cl
-bash scripts/run_two_gpu.sh
-```
+The paper motivates transport between successive posterior approximations
+through a Fisher-metric Brownian reference,
 
-The script downloads MNIST once, launches seed 0 on GPU 0 and seed 1 on GPU 1,
-waits for both jobs, and aggregates the final metrics. Its logs are written to
-`runs/logs/`; machine-readable summaries are under `runs/paper_seed*/`.
+$$
+d\theta_s=\sigma(A^{(t)})^{-1/2}dW_s.
+$$
 
-To select different visible devices or Python executable:
+A continuous endpoint construction uses the carried Gaussian mixture as
+\(\mu_t\) and a Gaussian mixture around the updated centers as \(\nu_t\).
+The Schrödinger bridge objective is
 
-```bash
-GPU0=2 GPU1=3 PYTHON=/path/to/python bash scripts/run_two_gpu.sh
-```
+$$
+\min_{\mathbb P}\mathrm{KL}(\mathbb P\|\mathbb Q^{(t)})
+\quad\text{subject to}\quad
+\mathbb P_0=\mu_t,\qquad\mathbb P_1=\nu_t.
+$$
 
-For a short plumbing check before the full job:
+Here the terminal mixture is a constructed approximation to the new posterior.
+The tempered objectives guide construction of its centers. Intermediate bridge
+marginals are determined by the endpoint laws and reference process.
 
-```bash
-bash scripts/run_smoke_two_gpu.sh
-```
+The proposed fitting stage uses iterative Markovian fitting (IMF), with drift
+networks acting on neuron tokens formed from incoming weights and a bias.
+The proposed reuse mechanism transfers a fitted drift to guide population
+updates at the next task boundary, followed by adaptation to the current task.
 
-The smoke run intentionally uses too few optimization and score-training steps
-for a paper result. Do not compare its accuracy with VCL.
+## Run the particle-update experiments
 
-## A single run
+The JAX runner batches runs and particles on the available devices. Its default
+classifier for Permuted MNIST has two hidden layers of 100 ReLU units and a
+shared ten-class output.
 
-```bash
-CUDA_VISIBLE_DEVICES=0 python -u -m gwd_cl.train \
-  --tasks 10 --particles 8 --width 100 --depth 2 \
-  --task1-epochs 15 --particle-refine-epochs 3 \
-  --score-steps 1500 --reverse-steps 1200 \
-  --sigma-max 0.50 --sigma-min 0.005 --solution-kernel-std 0.15 \
-  --guidance-mode proximal --posterior-learning-rate 0.03 \
-  --posterior-task-decay 1.0 --posterior-min-learning-rate 0.0125 \
-  --posterior-max-step 0.05 --seed 0 --tag paper
-```
-
-## Required diagnostic ablation
-
-The learned denoiser can be replaced by the exact score of the Gaussian-smoothed
-empirical distribution of the `K` latent solutions:
-
-```bash
-CUDA_VISIBLE_DEVICES=0 python -u -m gwd_cl.train \
-  --tasks 10 --particles 8 --score analytic --seed 0 --tag analytic_score
-```
-
-This is a diagnostic, not the proposed learned-diffusion result. All other
-settings remain the same.
-
-## Outputs
-
-Each task prints one JSON object containing:
-
-- average accuracy over all tasks observed so far;
-- average forgetting and backward transfer;
-- per-task accuracies and predictive negative log-likelihood;
-- denoiser validation loss; and
-- forward-noise, likelihood-gradient, and prior-score diagnostics.
-
-Aggregate any set of completed runs with:
+Follow the environment instructions in [psb_tpu/README.md](psb_tpu/README.md).
+From an environment with the required dependencies installed, inspect the
+smoke grid and run it with:
 
 ```bash
-python -m gwd_cl.summarize runs/paper_seed0 runs/paper_seed1
+cd psb_tpu
+python -m psb.run grids/smoke.yaml --plan
+python -m psb.run grids/smoke.yaml
+python -m psb.summarize results/smoke
 ```
 
-## Experimental cautions
+The smoke grid exercises the training paths with a short optimization budget.
+The twenty-seed comparison uses baseline hyperparameters selected by the tuning
+grid:
 
-- Keep `--permutation-seed` fixed when changing the model seed. Otherwise the
-  methods see different task sequences.
-- Paper comparisons require matching preprocessing, architecture, task count,
-  first-task convention, training data, and evaluation metric. A number copied
-  from a paper is not directly comparable unless all six match.
-- `K` is a fixed computational/state budget shared by all tasks. It is not the
-  number of tasks and does not grow with the stream.
-- No implementation can guarantee in advance that a new method beats VCL. The
-  included diagnostics are intended to reveal whether failure comes from score
-  estimation or likelihood guidance without spending a full sweep budget.
+```bash
+python -m psb.run grids/phase1a_tune.yaml
+python -m psb.run grids/phase1b_seeds.yaml
+python -m psb.summarize results/phase1b_seeds
+```
 
-## Background
+Use `--results /path/to/results` to choose a results directory. Use the same
+directory for tuning and the subsequent comparison so the runner can resolve
+the selected baseline hyperparameters.
 
-The implementation follows the variance-exploding score-SDE formulation of
-[Song et al.](https://arxiv.org/abs/2011.13456) and the central idea of using a
-measurement likelihood to guide reverse diffusion as in
-[Diffusion Posterior Sampling](https://arxiv.org/abs/2209.14687). Here the
-unknown object is a classifier parameter vector and the new-task dataset supplies
-the likelihood. The continual-learning construction in this repository is new
-experimental code, not an official implementation of either paper.
+### Default particle-update configuration
+
+| Setting | Default |
+| --- | --- |
+| Benchmark | Permuted MNIST, 10 tasks |
+| Particles | 128 |
+| Hidden layers | 100, 100 |
+| Temperature increments | 25 |
+| Updates per increment | 100 |
+| First-task updates | 3,000 |
+| Batch size | 64 |
+| Adam learning rate | 0.001 |
+| Penalty strength | 4.0 |
+| Precision decay | 0.8 |
+| Precision floor | 0.001 |
+| Fisher example budget | 20,000 |
+
+Grid files override these defaults. Each saved run includes its resolved
+configuration.
+
+## Results and repository layout
+
+Each run writes `summary.json` with its configuration, completion status,
+accuracy matrix, task history, and final metrics. The final average accuracy is
+
+$$
+\mathrm{ACC}^{(T)}=\frac1T\sum_{j=1}^{T}a^{(T,j)}.
+$$
+
+The summarizer aggregates completed runs by configuration and reports means,
+sample standard deviations, and paired comparisons when a reference is given.
+
+| Path | Contents |
+| --- | --- |
+| [paper/main.tex](paper/main.tex) | PSB manuscript |
+| [psb_tpu/psb/core.py](psb_tpu/psb/core.py) | Batched particle updates, Fisher accumulation, and evaluation |
+| [psb_tpu/psb/config.py](psb_tpu/psb/config.py) | Defaults and configuration expansion |
+| [psb_tpu/grids](psb_tpu/grids) | Experiment specifications |
+| [psb_tpu/psb/summarize.py](psb_tpu/psb/summarize.py) | Aggregation of saved run metrics |
+| [bwd_cl](bwd_cl) | PyTorch population and learned-displacement experiments |
+| [gwd_cl](gwd_cl) | Earlier weight-diffusion experiments |
+| [results_tpu/psb_results](results_tpu/psb_results) | Saved TPU run records |
