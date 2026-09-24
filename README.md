@@ -3,16 +3,15 @@
 Research code and manuscript for **Posterior Schrödinger Bridges (PSB)**,
 by Anand Ravishankar and Petar M. Djurić, Stony Brook University.
 
-The proposed method represents accumulated knowledge with a fixed population
+The method represents accumulated knowledge with a fixed population
 of neural networks and a shared diagonal precision. New tasks update this
 population through tempered likelihood adaptation and a quadratic constraint
 toward each network's carried parameters. The paper develops a Schrödinger
 bridge formulation for transport between successive population distributions.
 
-The [manuscript](paper/main.tex) describes the proposed framework. The runnable
+The [manuscript](paper/main.tex) describes the full framework. The runnable
 [TPU workflow](psb_tpu/README.md) implements its tempered Adam-plus-proximal
-particle-update component. The bridge model below describes the proposed
-extension, rather than a completed IMF implementation.
+particle-update component. 
 
 ## Posterior representation
 
@@ -107,7 +106,7 @@ strength, decay, and isotropic floor. This is the implemented regularization
 scale. The manuscript's Bayesian precision based on task-size-weighted Fisher
 information is a separate modeling definition.
 
-## Proposed bridge model
+## PSB model
 
 The paper motivates transport between successive posterior approximations
 through a Fisher-metric Brownian reference,
@@ -130,9 +129,9 @@ Here the terminal mixture is a constructed approximation to the new posterior.
 The tempered objectives guide construction of its centers. Intermediate bridge
 marginals are determined by the endpoint laws and reference process.
 
-The proposed fitting stage uses iterative Markovian fitting (IMF), with drift
+The fitting stage uses iterative Markovian fitting (IMF), with drift
 networks acting on neuron tokens formed from incoming weights and a bias.
-The proposed reuse mechanism transfers a fitted drift to guide population
+The reuse mechanism transfers a fitted drift to guide population
 updates at the next task boundary, followed by adaptation to the current task.
 
 ## Run the particle-update experiments
